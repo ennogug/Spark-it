@@ -1,0 +1,2300 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spark'it</title>
+  <meta name="description" content="Spark'it - Eine interaktive Ideen-Sammlung für Vincent Braun zum 18. Geburtstag">
+  <meta name="keywords" content="Ideen, Aktivitäten, Geschenk, Geburtstag, Vincent Braun">
+  <meta name="author" content="Spark'it">
+  <meta property="og:title" content="Spark'it">
+  <meta property="og:description" content="Eine interaktive Ideen-Sammlung für Vincent Braun zum 18. Geburtstag">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cabin+Sketch:wght@400;700&family=Caveat:wght@500;700&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #8f0f20;
+      --secondary: #8f0f20;
+      --accent: #8f0f20;
+      --background: #fdfdfb;
+      --surface: #fffefb;
+      --dark: #1f1f1f;
+      --muted: #d9d9d3;
+      --line: rgba(31, 31, 31, 0.16);
+      --shadow: 0 16px 42px rgba(31, 31, 31, 0.08);
+      --radius: 26px;
+      --stamp-cut: polygon(
+        0% 8%, 2% 8%, 2% 4%, 4% 4%, 4% 0%, 8% 0%, 8% 2%, 12% 2%, 12% 0%, 88% 0%, 88% 2%, 92% 2%, 92% 0%, 96% 0%, 96% 4%, 98% 4%, 98% 8%,
+        100% 8%, 100% 92%, 98% 92%, 98% 96%, 96% 96%, 96% 100%, 92% 100%, 92% 98%, 88% 98%, 88% 100%, 12% 100%, 12% 98%, 8% 98%, 8% 100%,
+        4% 100%, 4% 96%, 2% 96%, 2% 92%, 0% 92%
+      );
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: "Times New Roman", Times, serif;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+      background: var(--background);
+      background-image: url("../.cursor/projects/Users-ennoguggenbichler-Spark/assets/watercolor_paper_texture-86c3f77f-98e1-4ca8-87c7-4e4fc4d10215.png");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      color: var(--dark);
+      font-family: "Times New Roman", Times, serif;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::before {
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.74));
+      opacity: 1;
+    }
+
+    body::after {
+      background:
+        radial-gradient(circle at 16% 22%, rgba(122, 30, 51, 0.06), transparent 28%),
+        radial-gradient(circle at 86% 78%, rgba(122, 30, 51, 0.05), transparent 30%);
+      background-size: auto;
+      mix-blend-mode: normal;
+      opacity: 0.36;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      height: auto;
+      padding: clamp(14px, 2vw, 26px);
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: clamp(10px, 1.8vh, 18px);
+      isolation: isolate;
+    }
+
+    .page::before,
+    .page::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .page::before {
+      width: min(56vw, 720px);
+      height: clamp(90px, 16vh, 140px);
+      left: -4vw;
+      top: clamp(78px, 11vh, 118px);
+      background: radial-gradient(ellipse at 30% 50%, rgba(122, 30, 51, 0.13), rgba(122, 30, 51, 0.03) 62%, transparent 76%);
+      transform: rotate(-5deg);
+      filter: blur(0.8px);
+    }
+
+    .page::after {
+      width: min(44vw, 520px);
+      height: clamp(70px, 11vh, 104px);
+      right: 2vw;
+      bottom: clamp(110px, 16vh, 156px);
+      background: radial-gradient(ellipse at 50% 50%, rgba(122, 30, 51, 0.09), rgba(122, 30, 51, 0.02) 66%, transparent 78%);
+      transform: rotate(7deg);
+      filter: blur(1px);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(180px, 0.9fr);
+      grid-template-areas:
+        "title art"
+        "copy art";
+      align-items: end;
+      text-align: left;
+      gap: 8px 20px;
+      opacity: 0;
+      transform: translateY(18px);
+      animation: fadeUp 0.8s 0.05s forwards;
+    }
+
+    .hero-copy {
+      grid-area: copy;
+      position: relative;
+      padding: 0;
+      max-width: 38rem;
+      margin-top: -6px;
+      transform: rotate(-0.6deg);
+    }
+
+    .eyebrow,
+    .mini-label,
+    .card-meta,
+    .footer-stamp,
+    .admin-secret {
+      font-family: "Times New Roman", Times, serif;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow {
+      font-size: 0.95rem;
+      color: var(--primary);
+      margin-bottom: 6px;
+      letter-spacing: 0.08em;
+    }
+
+    h1 {
+      grid-area: title;
+      margin: 0;
+      font-family: "Times New Roman", Times, serif;
+      font-size: clamp(3rem, 11vw, 6.5rem);
+      line-height: 0.9;
+      letter-spacing: -0.01em;
+      position: relative;
+      display: inline-block;
+      color: var(--primary);
+      -webkit-text-stroke: 0;
+      text-shadow: 2px 3px 0 rgba(255, 255, 255, 0.8);
+      justify-self: start;
+      transform: rotate(-1deg);
+    }
+
+    h1::after {
+      content: "";
+      position: absolute;
+      left: 60%;
+      top: -12px;
+      width: clamp(70px, 10vw, 120px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle, rgba(122, 30, 51, 0.38) 0 42%, rgba(122, 30, 51, 0.12) 43% 60%, transparent 61%),
+        conic-gradient(from 0deg, rgba(122, 30, 51, 0.24), rgba(122, 30, 51, 0.06), rgba(122, 30, 51, 0.24));
+      z-index: -1;
+      filter: saturate(1.1);
+    }
+
+    .tagline {
+      margin: 10px 0 8px;
+      color: var(--primary);
+      font-size: 0.98rem;
+    }
+
+    .subtitle {
+      margin: 0;
+      max-width: 34rem;
+      font-size: clamp(1rem, 2.4vw, 1.2rem);
+      color: rgba(31, 31, 31, 0.82);
+    }
+
+    .memory-line {
+      margin: 12px 0 0;
+      font-family: "Caveat", "Times New Roman", Times, serif;
+      font-size: clamp(1.45rem, 3vw, 2.15rem);
+      letter-spacing: 0.02em;
+      color: rgba(122, 30, 51, 0.94);
+      transform: rotate(-1.2deg);
+      display: inline-block;
+    }
+
+    .hero-art {
+      grid-area: art;
+      display: grid;
+      place-items: center;
+      width: min(38vw, 280px);
+      min-width: 180px;
+      aspect-ratio: 4 / 5;
+      border-radius: 28px 18px 26px 16px;
+      background: var(--surface);
+      border: 1.5px solid var(--line);
+      box-shadow: var(--shadow);
+      transform: rotate(4deg) translateY(16px);
+      position: relative;
+      overflow: hidden;
+      justify-self: end;
+    }
+
+    .hero-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: saturate(1.05) contrast(1.02);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      margin-top: -12px;
+      padding: 12px 14px;
+      border: 1px dashed rgba(122, 30, 51, 0.2);
+      border-radius: 30px 18px 28px 14px;
+      background: rgba(255, 253, 247, 0.58);
+      backdrop-filter: blur(1.5px);
+      opacity: 0;
+      transform: translateY(18px);
+      animation: fadeUp 0.8s 0.22s forwards;
+    }
+
+    .photo-collage {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: clamp(10px, 1.8vw, 18px);
+      align-items: start;
+      margin-top: -4px;
+      margin-bottom: 4px;
+      padding: 4px 4px 8px;
+      z-index: 1;
+    }
+
+    .memory-shot {
+      position: relative;
+      width: 100%;
+      max-width: 210px;
+      aspect-ratio: 3 / 4;
+      border-radius: 16px;
+      border: 1px solid rgba(15, 31, 61, 0.2);
+      padding: 8px;
+      background: rgba(255, 253, 247, 0.92);
+      box-shadow: 0 8px 24px rgba(12, 16, 24, 0.12);
+      opacity: 0.96;
+      backdrop-filter: blur(1.5px);
+      margin: 0;
+      justify-self: center;
+      transition: transform 0.3s ease;
+    }
+
+    .memory-shot img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+      filter: saturate(1.05) contrast(1.03);
+    }
+
+    .image-wrapper {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      bottom: 8px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: white;
+    }
+
+    .image-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+    }
+
+    .memory-shot.one {
+      transform: rotate(-3deg);
+    }
+
+    .memory-shot.two {
+      transform: rotate(2deg);
+    }
+
+    .memory-shot.three {
+      transform: rotate(-2deg);
+    }
+
+    .memory-shot.four {
+      transform: rotate(3deg);
+    }
+
+    .memory-shot.five {
+      transform: rotate(-1deg);
+    }
+
+    .memory-shot:hover {
+      transform: rotate(0deg) scale(1.05);
+      z-index: 10;
+    }
+
+    .category-group {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .category-btn,
+    .action-btn,
+    .icon-btn,
+    .admin-login button,
+    .admin-form button {
+      border: 1.5px solid var(--dark);
+      background: var(--surface);
+      color: var(--dark);
+      cursor: pointer;
+      transition: transform 0.22s ease, box-shadow 0.22s ease, background 0.22s ease, color 0.22s ease, opacity 0.22s ease;
+    }
+
+    .category-btn {
+      min-height: 86px;
+      clip-path: none;
+      border-radius: 28px 18px 26px 15px;
+      padding: 10px 14px;
+      text-align: left;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(250, 248, 234, 0.9));
+    }
+
+    .category-btn::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle at 12% 18%, rgba(15, 31, 61, 0.05), transparent 22%);
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+
+    .stamp::before,
+    .idea-card::after,
+    .modal-card::before,
+    .admin-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle at 12% 18%, rgba(15, 31, 61, 0.05), transparent 22%);
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+
+    .category-btn.active {
+      background: linear-gradient(145deg, #a41b2e, #8f0f20);
+      color: #fffaf7;
+      transform: translateY(-3px);
+      box-shadow: 0 24px 46px rgba(122, 30, 51, 0.25);
+    }
+
+    .category-btn:hover,
+    .action-btn:hover,
+    .icon-btn:hover,
+    .admin-login button:hover,
+    .admin-form button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 30px rgba(15, 31, 61, 0.14);
+    }
+
+    .mini-label {
+      font-size: 0.78rem;
+      opacity: 0.72;
+    }
+
+    .category-btn strong {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 1.1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .category-btn span:last-child {
+      font-size: 0.76rem;
+      opacity: 0.8;
+    }
+
+    .control-stamp {
+      justify-self: end;
+      position: relative;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px dashed rgba(122, 30, 51, 0.5);
+      color: var(--primary);
+      background: rgba(255, 253, 247, 0.86);
+      white-space: nowrap;
+      font-size: 0.78rem;
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: minmax(0, 1.12fr) minmax(260px, 0.88fr);
+      gap: 18px;
+      min-height: 0;
+      align-items: start;
+      margin-top: -8px;
+      opacity: 0;
+      transform: translateY(18px);
+      animation: fadeUp 0.8s 0.4s forwards;
+    }
+
+    .card-stage,
+    .side-panel {
+      min-height: 0;
+    }
+
+    .card-stage {
+      position: relative;
+      display: grid;
+      place-items: start center;
+      overflow: hidden;
+      padding-top: 18px;
+    }
+
+    .collage-piece {
+      position: absolute;
+      border: 1px solid rgba(15, 31, 61, 0.14);
+      background: rgba(255, 253, 247, 0.7);
+      backdrop-filter: blur(3px);
+      box-shadow: var(--shadow);
+      pointer-events: none;
+      opacity: 0.65;
+    }
+
+    .piece-one {
+      width: 110px;
+      height: 146px;
+      top: 6%;
+      left: 3%;
+      transform: rotate(-9deg);
+      clip-path: var(--stamp-cut);
+    }
+
+    .piece-two {
+      width: 96px;
+      height: 96px;
+      bottom: 10%;
+      right: 4%;
+      border-radius: 50%;
+      transform: rotate(10deg);
+    }
+
+    .piece-three {
+      width: 140px;
+      height: 68px;
+      bottom: 5%;
+      left: 6%;
+      transform: rotate(-4deg);
+      clip-path: polygon(0 0, 92% 0, 100% 50%, 92% 100%, 0 100%, 8% 50%);
+    }
+
+    .idea-card {
+      position: relative;
+      width: min(100%, 700px);
+      min-height: min(62vh, 520px);
+      padding: clamp(20px, 3vw, 34px);
+      background:
+        radial-gradient(circle at 20% 8%, rgba(122, 30, 51, 0.10), transparent 28%),
+        radial-gradient(circle at 86% 82%, rgba(122, 30, 51, 0.08), transparent 34%),
+        var(--surface);
+      border: 1.8px solid rgba(15, 31, 61, 0.16);
+      border-radius: 30px 20px 34px 18px;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 16px;
+      transform-origin: center;
+      transform: rotate(-1deg);
+    }
+
+    .idea-card.is-animating {
+      animation: none;
+    }
+
+    .idea-card.enter {
+      animation: flyIn 0.62s cubic-bezier(.18,.9,.3,1.25) forwards;
+    }
+
+    .idea-card.exit {
+      animation: flyOut 0.42s cubic-bezier(.75,0,.95,.8) forwards;
+    }
+
+    .stamp {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      width: 108px;
+      height: 108px;
+      border-radius: 50%;
+      border: 1.6px dashed rgba(122, 30, 51, 0.6);
+      display: grid;
+      place-items: center;
+      color: var(--primary);
+      font-size: 0.74rem;
+      line-height: 1.3;
+      text-align: center;
+      transform: rotate(14deg);
+      background: rgba(122, 30, 51, 0.14);
+      overflow: hidden;
+    }
+
+    .card-top {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding-right: 110px;
+    }
+
+    .card-icon {
+      width: 74px;
+      height: 74px;
+      border-radius: 22px;
+      display: grid;
+      place-items: center;
+      background: rgba(122, 30, 51, 0.14);
+      border: 1px solid rgba(122, 30, 51, 0.22);
+      font-size: 2rem;
+      flex-shrink: 0;
+    }
+
+    .card-headings h2 {
+      margin: 0;
+      font-family: "Times New Roman", Times, serif;
+      font-size: clamp(1.9rem, 4.5vw, 3.15rem);
+      line-height: 0.96;
+      letter-spacing: -0.04em;
+      max-width: 10ch;
+    }
+
+    .card-headings p {
+      margin: 8px 0 0;
+      color: rgba(31, 31, 31, 0.7);
+      font-size: 0.95rem;
+    }
+
+    .card-copy {
+      display: grid;
+      align-content: center;
+      gap: 14px;
+      max-width: 46ch;
+      font-size: clamp(0.98rem, 1.7vw, 1.08rem);
+      line-height: 1.7;
+    }
+
+    .card-copy p {
+      margin: 0;
+    }
+
+    .card-footer {
+      display: grid;
+      gap: 12px;
+    }
+
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.78rem;
+      color: rgba(15, 31, 61, 0.72);
+    }
+
+    .side-panel {
+      display: grid;
+      grid-template-rows: auto;
+      gap: 14px;
+      min-height: 0;
+      padding-top: clamp(18px, 4vh, 42px);
+    }
+
+    .panel-card {
+      background:
+        radial-gradient(circle at 18% 24%, rgba(122, 30, 51, 0.1), transparent 24%),
+        rgba(255, 253, 247, 0.8);
+      border: 1px solid rgba(15, 31, 61, 0.12);
+      border-radius: 18px 30px 18px 28px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      min-height: 0;
+      transform: rotate(1.2deg);
+    }
+
+    .panel-card h3 {
+      margin: 0 0 10px;
+      font-family: "Times New Roman", Times, serif;
+      font-size: 1.4rem;
+    }
+
+    .action-stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .action-btn,
+    .icon-btn,
+    .admin-login button,
+    .admin-form button {
+      border-radius: 22px 28px 24px 18px;
+      padding: 14px 16px;
+      font-size: 0.92rem;
+      font-family: "Times New Roman", Times, serif;
+    }
+
+    .action-btn.primary {
+      background: linear-gradient(145deg, #a41b2e, #8f0f20);
+      color: #fffaf7;
+    }
+
+    #generateButton {
+      padding: 18px 18px;
+      font-size: 1.05rem;
+      min-height: 56px;
+    }
+
+    .action-btn.secondary {
+      background: var(--secondary);
+      color: #fffaf7;
+    }
+
+    .action-btn.ghost {
+      background: rgba(122, 30, 51, 0.12);
+    }
+
+    .history-list {
+      display: grid;
+      gap: 8px;
+      overflow: auto;
+      max-height: 100%;
+      padding-right: 4px;
+    }
+
+    .history-item {
+      border-left: 3px solid var(--primary);
+      padding: 8px 0 8px 12px;
+      background: rgba(255, 255, 255, 0.36);
+    }
+
+    .history-item strong {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 0.9rem;
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      opacity: 0;
+      transform: translateY(18px);
+      animation: fadeUp 0.8s 0.6s forwards;
+    }
+
+    .footer-stamp {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 22px 28px 20px 30px;
+      background: rgba(255, 253, 247, 0.82);
+      border: 1px dashed rgba(122, 30, 51, 0.46);
+      color: var(--primary);
+      font-size: 0.8rem;
+    }
+
+    .admin-secret {
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: rgba(95, 85, 18, 0.84);
+      cursor: pointer;
+      font-size: 0.85rem;
+      letter-spacing: 0.18em;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 20px;
+      background: rgba(15, 31, 61, 0.34);
+      backdrop-filter: blur(10px);
+      z-index: 20;
+    }
+
+    .overlay.open {
+      display: grid;
+    }
+
+    .modal-card,
+    .admin-panel {
+      width: min(100%, 960px);
+      background: var(--surface);
+      border: 1.8px solid rgba(15, 31, 61, 0.14);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 28px 70px rgba(15, 31, 61, 0.22);
+      animation: modalIn 0.32s ease;
+    }
+
+    .modal-card {
+      max-width: 540px;
+      padding: 20px;
+      border-radius: 18px 30px 18px 28px;
+      background:
+        radial-gradient(circle at 18% 24%, rgba(122, 30, 51, 0.08), transparent 24%),
+        rgba(255, 253, 247, 0.8);
+      border: 1px solid rgba(15, 31, 61, 0.12);
+      box-shadow: var(--shadow);
+      transform: rotate(-0.8deg);
+    }
+
+    .admin-panel {
+      width: min(96vw, 1180px);
+      max-height: min(90vh, 860px);
+      clip-path: none;
+      border-radius: var(--radius);
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      padding: 20px;
+      gap: 16px;
+    }
+
+    .overlay header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .overlay h3,
+    .overlay h4 {
+      margin: 0;
+      font-family: "Times New Roman", Times, serif;
+    }
+
+    .overlay p {
+      margin: 6px 0 0;
+      color: rgba(15, 31, 61, 0.7);
+      font-size: 0.9rem;
+    }
+
+    .close-btn {
+      border: none;
+      background: transparent;
+      color: var(--dark);
+      font-size: 1.6rem;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .form-grid,
+    .admin-form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .form-grid {
+      margin-top: 18px;
+    }
+
+    label span {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--secondary);
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid rgba(15, 31, 61, 0.16);
+      background: rgba(255, 255, 255, 0.82);
+      padding: 12px 14px;
+      font: inherit;
+      color: inherit;
+      outline: none;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.16);
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .modal-actions,
+    .admin-topbar,
+    .admin-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .admin-topbar {
+      justify-content: space-between;
+    }
+
+    .admin-login {
+      display: grid;
+      gap: 12px;
+      max-width: 360px;
+    }
+
+    .admin-filters input {
+      min-width: 220px;
+      flex: 1;
+    }
+
+    .admin-filters select {
+      width: auto;
+      min-width: 150px;
+    }
+
+    #adminContent {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .admin-table-wrap {
+      overflow: auto;
+      overscroll-behavior: contain;
+      scrollbar-gutter: stable both-edges;
+      min-height: 0;
+      max-height: none;
+      border-radius: 18px;
+      border: 1px solid rgba(15, 31, 61, 0.12);
+      background: rgba(255, 255, 255, 0.74);
+      backdrop-filter: blur(3px);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+      line-height: 1.45;
+    }
+
+    th,
+    td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid rgba(15, 31, 61, 0.08);
+      vertical-align: top;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: rgba(245, 240, 232, 0.98);
+      backdrop-filter: blur(2px);
+      z-index: 1;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(15, 31, 61, 0.025);
+    }
+
+    tbody tr:hover {
+      background: rgba(243, 195, 22, 0.12);
+    }
+
+    td input,
+    td textarea,
+    td select {
+      background: rgba(255, 253, 247, 0.88);
+      border-radius: 12px;
+      padding: 9px 10px;
+      line-height: 1.35;
+    }
+
+    td textarea {
+      min-height: 72px;
+    }
+
+    td:nth-child(3),
+    td textarea {
+      word-break: break-word;
+      hyphens: auto;
+    }
+
+    .admin-table-wrap::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    .admin-table-wrap::-webkit-scrollbar-thumb {
+      background: rgba(15, 31, 61, 0.28);
+      border-radius: 999px;
+      border: 2px solid rgba(255, 255, 255, 0.72);
+    }
+
+    .admin-table-wrap::-webkit-scrollbar-track {
+      background: rgba(15, 31, 61, 0.06);
+      border-radius: 999px;
+    }
+
+    .table-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .muted {
+      color: rgba(15, 31, 61, 0.58);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes flyIn {
+      0% {
+        opacity: 0;
+        transform: translateY(-62px) rotate(-4deg) scale(0.96);
+      }
+      72% {
+        opacity: 1;
+        transform: translateY(12px) rotate(var(--random-rotation)) scale(1.01);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) rotate(var(--random-rotation)) scale(1);
+      }
+    }
+
+    @keyframes flyOut {
+      from {
+        opacity: 1;
+        transform: translateY(0) rotate(var(--random-rotation)) scale(1);
+      }
+      to {
+        opacity: 0;
+        transform: translateY(90px) rotate(calc(var(--random-rotation) * -1)) scale(0.94);
+      }
+    }
+
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: scale(0.86);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @media (max-width: 980px) {
+      .page {
+        grid-template-rows: auto auto auto 1fr auto;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "title"
+          "copy"
+          "art";
+      }
+
+      h1 {
+        justify-self: center;
+      }
+
+      .hero-copy {
+        transform: none;
+      }
+
+      .memory-shot {
+        max-width: 160px;
+      }
+
+      .photo-collage {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+        margin-top: 0;
+      }
+
+      .control-stamp {
+        justify-self: start;
+      }
+
+      .main {
+        grid-template-columns: 1fr;
+        margin-top: 0;
+      }
+
+      .side-panel {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-rows: none;
+        padding-top: 0;
+      }
+
+    }
+
+    @media (max-width: 720px) {
+      html,
+      body {
+        overflow: auto;
+      }
+
+      .page {
+        min-height: 100vh;
+        height: auto;
+        overflow: visible;
+        padding: clamp(8px, 2vw, 16px);
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "title"
+          "art"
+          "copy";
+        gap: 12px;
+      }
+
+      .hero-art {
+        justify-self: center;
+        width: 120px;
+        transform: rotate(2deg);
+      }
+
+      .memory-line {
+        transform: none;
+      }
+
+      .photo-collage {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin: 8px 0;
+      }
+
+      .memory-shot {
+        max-width: none;
+        transform: none !important;
+      }
+
+      .category-group {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .idea-card {
+        min-height: auto;
+        padding: clamp(16px, 4vw, 24px);
+      }
+
+      .card-top {
+        padding-right: 0;
+      }
+
+      .stamp {
+        position: relative;
+        top: auto;
+        right: auto;
+        width: 100%;
+        height: auto;
+        border-radius: 18px;
+        padding: 10px;
+        transform: rotate(-1.4deg);
+      }
+
+      .side-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .panel-card,
+      .idea-card,
+      h1 {
+        transform: none;
+      }
+
+      .memory-shot {
+        max-width: none;
+        opacity: 1;
+        transform: none !important;
+      }
+
+      footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    .upload-section {
+      margin-top: 32px;
+      padding: 24px;
+      opacity: 0;
+      transform: translateY(18px);
+      animation: fadeUp 0.8s 0.8s forwards;
+    }
+
+    .upload-card {
+      background:
+        radial-gradient(circle at 18% 24%, rgba(122, 30, 51, 0.08), transparent 24%),
+        rgba(255, 253, 247, 0.8);
+      border: 1px solid rgba(15, 31, 61, 0.12);
+      border-radius: 18px 30px 18px 28px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+      transform: rotate(-0.8deg);
+    }
+
+    .upload-card h3 {
+      margin: 0 0 8px;
+      font-family: "Times New Roman", Times, serif;
+      font-size: 1.4rem;
+      color: var(--primary);
+    }
+
+    .upload-card p {
+      margin: 0 0 16px;
+      color: rgba(31, 31, 31, 0.7);
+      font-size: 0.95rem;
+    }
+
+    .upload-area {
+      border: 2px dashed rgba(122, 30, 51, 0.3);
+      border-radius: 20px 16px 22px 18px;
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .upload-area:hover {
+      border-color: var(--primary);
+      background: rgba(255, 255, 255, 0.6);
+      transform: translateY(-2px);
+    }
+
+    .upload-area.dragover {
+      border-color: var(--primary);
+      background: rgba(122, 30, 51, 0.1);
+      transform: scale(1.02);
+    }
+
+    .upload-prompt {
+      pointer-events: none;
+    }
+
+    .upload-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 12px;
+      border: 2px solid var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: var(--primary);
+      background: rgba(255, 253, 247, 0.8);
+    }
+
+    .upload-prompt p {
+      margin: 0 0 4px;
+      font-weight: 500;
+      color: var(--primary);
+    }
+
+    .upload-hint {
+      font-size: 0.8rem;
+      color: rgba(31, 31, 31, 0.6);
+    }
+
+    .gallery-container {
+      opacity: 0;
+      transform: translateY(18px);
+      animation: fadeUp 0.8s 1s forwards;
+    }
+
+    .gallery-container h4 {
+      margin: 0 0 16px;
+      font-family: "Times New Roman", Times, serif;
+      font-size: 1.2rem;
+      color: var(--primary);
+      transform: rotate(0.5deg);
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 16px;
+      min-height: 0;
+    }
+
+    .gallery-item {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      border-radius: 18px 10px 20px 12px;
+      border: 1px solid rgba(15, 31, 61, 0.2);
+      padding: 7px;
+      background: rgba(255, 253, 247, 0.82);
+      box-shadow: 0 14px 30px rgba(12, 16, 24, 0.16);
+      opacity: 0.96;
+      backdrop-filter: blur(1.5px);
+      transform: rotate(calc(var(--rotation) * 1deg));
+      transition: transform 0.3s ease;
+      cursor: pointer;
+    }
+
+    .gallery-item:hover {
+      transform: rotate(calc(var(--rotation) * 1deg)) scale(1.05);
+      z-index: 10;
+    }
+
+    .gallery-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 12px 8px 13px 10px;
+      filter: saturate(1.05) contrast(1.03);
+    }
+
+    .gallery-item .delete-btn {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: rgba(122, 30, 51, 0.8);
+      color: white;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      z-index: 5;
+    }
+
+    .gallery-item:hover .delete-btn {
+      display: flex;
+    }
+
+    .empty-gallery {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 40px 20px;
+      color: rgba(31, 31, 31, 0.5);
+      font-style: italic;
+    }
+
+    @media (max-width: 720px) {
+      .upload-section {
+        padding: 16px;
+        margin-top: 24px;
+      }
+
+      .upload-card {
+        padding: 16px;
+        transform: none;
+      }
+
+      .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 12px;
+      }
+
+      .gallery-item {
+        transform: none !important;
+      }
+
+      .gallery-item:hover {
+        transform: scale(1.05) !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <h1 id="logoButton" tabindex="0" role="button" aria-label="Spark'it Logo">Spark'it</h1>
+      <div class="hero-art" aria-hidden="true">
+        <img src="IMG_5021.HEIC" alt="Vincent Braun Geschenkbild" loading="lazy" decoding="async">
+      </div>
+      <div class="hero-copy">
+        <div class="eyebrow">Zum 18. für Vincent Braun</div>
+        <p class="subtitle">Carpe diem – ergreife den Augenblick, ehe er unbemerkt vergeht. Lass dich treiben, entdecke Neues und wage den Schritt ins Erleben.</p>
+        <p class="memory-line">Make memories</p>
+      </div>
+    </section>
+
+    <div class="photo-collage" aria-hidden="true">
+      <figure class="memory-shot one">
+        <div class="image-wrapper">
+          <img src="615780ca-47ab-42a7-a6fb-43d8198bd900.JPG" alt="" loading="lazy" decoding="async">
+        </div>
+      </figure>
+      <figure class="memory-shot two">
+        <div class="image-wrapper">
+          <img src="IMG_1756.HEIC" alt="" loading="lazy" decoding="async">
+        </div>
+      </figure>
+      <figure class="memory-shot three">
+        <div class="image-wrapper">
+          <img src="IMG_9053.HEIC" alt="" loading="lazy" decoding="async">
+        </div>
+      </figure>
+      <figure class="memory-shot four">
+        <div class="image-wrapper">
+          <img src="IMG_2923.HEIC" alt="" loading="lazy" decoding="async">
+        </div>
+      </figure>
+      <figure class="memory-shot five">
+        <div class="image-wrapper">
+          <img src="IMG_3747.HEIC" alt="" loading="lazy" decoding="async">
+        </div>
+      </figure>
+    </div>
+
+    <section class="controls">
+      <div class="category-group" id="categoryButtons"></div>
+      <div class="control-stamp" id="controlStamp">Kategorie wählen und Spark'it</div>
+    </section>
+
+    <main class="main">
+      <section class="card-stage">
+        <div class="collage-piece piece-one" aria-hidden="true"></div>
+        <div class="collage-piece piece-two" aria-hidden="true"></div>
+        <div class="collage-piece piece-three" aria-hidden="true"></div>
+        <article class="idea-card" id="ideaCard" style="--random-rotation: 0deg;">
+          <div class="card-top">
+            <div class="card-icon" id="cardEmoji">☀️</div>
+            <div class="card-headings">
+              <h2 id="cardTitle">Spark'it</h2>
+              <p id="cardSubtitle">Wähle erst eine Kategorie und lass dir dann etwas Schönes ausspielen.</p>
+            </div>
+          </div>
+          <div class="card-copy">
+            <p id="cardDescription">Jede Karte kommt mit einer kleinen Einladung, Tags und einer Dauer. Bereits gezogene Ideen wiederholen sich nicht sofort.</p>
+          </div>
+          <div class="card-footer">
+            <div class="card-meta">
+              <span id="cardCategory"></span>
+              <span id="cardDuration"></span>
+              <span id="cardTags"></span>
+              <span id="cardCount">110+ Ideen im Pool</span>
+              <span id="cardSource">Original-Sammlung</span>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <aside class="side-panel">
+        <section class="panel-card">
+          <h3>Ziehmaschine</h3>
+          <div class="action-stack">
+            <button class="action-btn primary" id="generateButton">Spark'it</button>
+            <button class="action-btn ghost" id="addIdeaButton">Eigene Idee hinzufügen</button>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <section class="upload-section">
+      <div class="upload-card">
+        <h3>Deine Erinnerungen</h3>
+        <p>Lade Bilder von deinen durchgeführten Aktivitäten hoch und erstelle deine persönliche Galerie.</p>
+        <div class="upload-area" id="uploadArea">
+          <input type="file" id="imageUpload" accept="image/*" multiple hidden>
+          <div class="upload-prompt" id="uploadPrompt">
+            <div class="upload-icon">+</div>
+            <p>Klicke hier oder ziehe Bilder hierher</p>
+            <span class="upload-hint">JPG, PNG, HEIC bis 10MB</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="gallery-container" id="galleryContainer">
+        <h4>Deine Galerie</h4>
+        <div class="gallery-grid" id="galleryGrid">
+          <!-- Uploaded images will appear here -->
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="footer-stamp">Spark'it · Geschenk zum 18. für Vincent Braun</div>
+      <button class="admin-secret" id="adminToggle">Archiv</button>
+    </footer>
+  </div>
+
+  <div class="overlay" id="ideaModal" aria-hidden="true">
+    <div class="modal-card">
+      <header>
+        <div>
+          <h3>Deine Idee</h3>
+          <p>Sie landet direkt im Wahlpool und bleibt lokal auf diesem Gerät gespeichert.</p>
+        </div>
+        <button class="close-btn" data-close="ideaModal" aria-label="Schließen">×</button>
+      </header>
+      <form class="form-grid" id="ideaForm">
+        <label>
+          <span>Titel</span>
+          <input type="text" name="title" maxlength="80" required>
+        </label>
+        <label>
+          <span>Beschreibung</span>
+          <textarea name="description" maxlength="220" required></textarea>
+        </label>
+        <label>
+          <span>Kategorie</span>
+          <select name="category" required></select>
+        </label>
+        <label>
+          <span>Emoji / Icon</span>
+          <input type="text" name="emoji" maxlength="4" placeholder="✨" required>
+        </label>
+        <div class="modal-actions">
+          <button class="action-btn primary" type="submit">Speichern</button>
+          <button class="action-btn ghost" type="button" data-close="ideaModal">Abbrechen</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="overlay" id="adminModal" aria-hidden="true">
+    <div class="admin-panel">
+      <header>
+        <div>
+          <h3>Archiv</h3>
+          <p>Alle Aktivitäten, lokal editierbar, filterbar und exportierbar.</p>
+        </div>
+        <button class="close-btn" data-close="adminModal" aria-label="Schließen">×</button>
+      </header>
+
+      <div id="adminGate" class="admin-login">
+        <label>
+          <span>Passwort</span>
+          <input type="password" id="adminPassword" placeholder="Passwort eingeben">
+        </label>
+        <button type="button" id="adminLoginButton">Öffnen</button>
+        <div class="muted" id="adminFeedback">Versteckter Bereich. Passwort erforderlich.</div>
+      </div>
+
+      <div id="adminContent" class="hidden">
+        <div class="admin-topbar">
+          <div class="admin-filters">
+            <input type="search" id="adminSearch" placeholder="Suchen nach Titel oder Beschreibung">
+            <select id="adminFilter"></select>
+            <button class="icon-btn" type="button" id="exportButton">JSON exportieren</button>
+          </div>
+          <div class="muted" id="adminCount"></div>
+        </div>
+
+        <form class="admin-form" id="adminAddForm">
+          <h4>Neue Idee hinzufügen</h4>
+          <div class="admin-filters">
+            <input type="text" name="title" placeholder="Titel" required>
+            <input type="text" name="emoji" placeholder="Emoji" maxlength="4" required>
+            <select name="category" required></select>
+            <input type="text" name="duration" placeholder="Dauer" required>
+          </div>
+          <textarea name="description" placeholder="Beschreibung" maxlength="220" required></textarea>
+          <button type="submit">Hinzufügen</button>
+        </form>
+
+        <div class="admin-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Emoji</th>
+                <th>Titel</th>
+                <th>Beschreibung</th>
+                <th>Kategorie</th>
+                <th>Dauer</th>
+                <th>Quelle</th>
+                <th>Aktionen</th>
+              </tr>
+            </thead>
+            <tbody id="adminTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEYS = {
+      customIdeas: "spark.customIdeas",
+      deletedIdeas: "spark.deletedIdeas",
+      editedIdeas: "spark.editedIdeas",
+      history: "spark.history",
+      adminUnlocked: "spark.adminUnlocked",
+      easterEgg: "spark.easterEgg"
+    };
+
+    const categories = [
+      { id: "date", label: "Date Night", icon: "🕯️", description: "Perfekt für zu zweit", durationHint: "Abend" },
+      { id: "short", label: "2–3 Stunden", icon: "⚡", description: "Spontan & schnell", durationHint: "2–3 Std" },
+      { id: "fullday", label: "Ganzer Tag", icon: "☀️", description: "Voller Einsatz", durationHint: "Ganzer Tag" }
+    ];
+
+    function makeIdea(id, title, description, category, duration, tags, emoji, isUserAdded = false) {
+      return { id, title, description, category, duration, tags, emoji, isUserAdded };
+    }
+
+    const originalIdeas = [
+      makeIdea("date-001", "Spazieren in der Stadt", "Zieht ohne Plan los, biegt immer dort ab, wo es interessanter aussieht, und entdeckt eure eigene Lieblingsroute neu.", "date", "Abend", ["Stadt", "Spontan", "Klassiker"], "🚶"),
+      makeIdea("date-002", "Spazieren im Wald", "Nehmt euch Tee im Becher mit und macht aus einem einfachen Waldweg einen kleinen Rückzug aus allem.", "date", "Abend", ["Natur", "Ruhe", "Draußen"], "🌲"),
+      makeIdea("date-003", "Pool spielen gehen", "Ein paar Runden Billard, leichte Konkurrenz und danach noch ein Drink oder Snack zum Nachbesprechen.", "date", "Abend", ["Spiel", "Indoor", "Duell"], "🎱"),
+      makeIdea("date-004", "Eisbach surfen gehen", "Wenn die Bedingungen passen, wird daraus ein echtes München-Abenteuer; alternativ bleibt der Spot als energiegeladene Session am Wasser.", "date", "Abend", ["München", "Wasser", "Bewegung"], "🏄"),
+      makeIdea("date-005", "Tennis spielen", "Bucht spontan einen Platz oder nehmt Schläger mit in den Park und spielt locker ohne Leistungsdruck.", "date", "2-3 Std", ["Sport", "Duell", "Aktiv"], "🎾"),
+      makeIdea("date-006", "Brettspiele spielen", "Sucht euch ein Spiel, das ein bisschen Chaos erlaubt, und macht den Abend zur Mini-Meisterschaft.", "date", "Abend", ["Indoor", "Spiel", "Gemütlich"], "🎲"),
+      makeIdea("date-007", "U-Bahn-Wein-Expedition", "Ein Weinglas, eine Flasche und an zufälligen Stationen aussteigen: Jede Haltestelle wird kurz zu eurem Forschungsgebiet.", "date", "Abend", ["Stadt", "Experiment", "München"], "🍷"),
+      makeIdea("date-008", "Gemeinsam malen", "Sucht euch ein Thema, legt Musik auf und malt ohne Anspruch, nur auf Stimmung und Spaß.", "date", "Abend", ["Kreativ", "Ruhig", "Farben"], "🎨"),
+      makeIdea("date-009", "Billigwein-Verkostung", "Kauft mehrere günstige Flaschen, versteckt die Etiketten und kürt ganz ernsthaft den absurdesten Sieger.", "date", "Abend", ["Verkostung", "Humor", "Drinnen"], "🍾"),
+      makeIdea("date-010", "Fotobuch-Abend", "Blättert alte Fotos durch, erzählt euch die vergessenen Geschichten dazu und ergänzt neue Randnotizen.", "date", "Abend", ["Erinnerungen", "Ruhig", "Persönlich"], "📚"),
+      makeIdea("date-011", "Strava-Kunst malen", "Plant eine Lauf- oder Gehstrecke so, dass am Ende auf der Karte ein Motiv entsteht und haltet das Ergebnis fest.", "date", "2-3 Std", ["Kreativ", "Sport", "Digital"], "🗺️"),
+      makeIdea("date-012", "Barhopping zu zweit", "Setzt euch pro Bar eine kleine Aufgabe und macht aus dem Abend eine charmant-chaotische Mini-Tour.", "date", "Abend", ["Nacht", "Stadt", "Bar"], "🍸"),
+      makeIdea("date-013", "Fußballgolf-Feldzug", "Stellt weit entfernt einen Eimer auf und spielt mit möglichst wenigen Schüssen quer durch eure Umgebung.", "date", "2-3 Std", ["Sport", "DIY", "Outdoor"], "⚽"),
+      makeIdea("date-014", "Tennis im Garten", "Improvisiert Netz, Linien und Regeln und macht aus dem Garten einen leicht lächerlichen Center Court.", "date", "2-3 Std", ["Garten", "DIY", "Sport"], "🏡"),
+      makeIdea("date-015", "Gartentag ohne Handys", "Alles Digitale bleibt drinnen und ihr verbringt ein paar Stunden nur mit Sonnenlicht, Getränken und echter Langeweile.", "date", "Abend", ["Digital Detox", "Garten", "Ruhig"], "📵"),
+      makeIdea("date-016", "Planetarium", "Taucht gemeinsam in Sternbilder, Dunkelheit und diesen seltsam schönen Raum-Zeit-Modus ein.", "date", "Abend", ["Kultur", "Indoor", "Kosmos"], "🪐"),
+      makeIdea("date-017", "Gegenseitig zeichnen", "Stellt einen Timer, zeichnet schnell mehrere Versionen und kürt am Ende die frechste Ähnlichkeit.", "date", "Abend", ["Kreativ", "Portrait", "Humor"], "✏️"),
+      makeIdea("date-018", "Pixel Arena", "Geht in die Pixel Arena und spielt euch gemeinsam durch Licht, Reaktion und leicht absurden Ehrgeiz.", "date", "2-3 Std", ["Action", "Indoor", "Games"], "🕹️"),
+      makeIdea("date-019", "Wohnzimmer-Pool mit Murmeln", "Baut aus Büchern, Murmeln und Stäbchen euren eigenen Billardtisch und nehmt die Regeln völlig ernst.", "date", "2-3 Std", ["DIY", "Spiel", "Chaos"], "📘"),
+      makeIdea("date-020", "Bootfahren auf dem Starnberger See", "Ein ruhiger Klassiker mit Aussicht, Wasser und genau der richtigen Menge Sommerfilm-Gefühl.", "date", "Abend", ["Wasser", "Ausflug", "Romantisch"], "🚤"),
+      makeIdea("date-021", "Schokolade-auspacken-Spiel", "Verpackt Schokolade mehrfach, würfelt um Tempo und lacht über die überraschend intensive Spannung.", "date", "2-3 Std", ["Spiel", "Süß", "Party"], "🍫"),
+      makeIdea("date-022", "Papierflieger-Wettbewerb", "Baut verschiedene Modelle, testet Wurfweiten und führt ein übertrieben professionelles Ranking.", "date", "2-3 Std", ["DIY", "Wettkampf", "Leicht"], "🛩️"),
+      makeIdea("date-023", "Wild Golf", "Sucht euch absurde Hindernisse und spielt eine Runde Minigolf ohne Minigolfplatz.", "date", "2-3 Std", ["DIY", "Draußen", "Spiel"], "⛳"),
+      makeIdea("date-024", "Blindverkostung Eigenmarke vs. Marke", "Organisiert einen kleinen Test mit Chips, Schokolade oder Limo und findet heraus, ob Teuer wirklich gewinnt.", "date", "Abend", ["Verkostung", "Experiment", "Food"], "🥫"),
+      makeIdea("date-025", "Eigene Cocktails erfinden", "Nehmt ein paar Zutaten, gebt euren Kreationen Namen und bewertet ehrlich nach Geschmack und Stil.", "date", "Abend", ["Mixen", "Kreativ", "Bar"], "🍹"),
+      makeIdea("date-026", "Blind-Date mit einem Film", "Eine Person wählt den Film komplett geheim, die andere darf erst beim Start erfahren, worauf sie sich einlässt.", "date", "Abend", ["Film", "Überraschung", "Indoor"], "🎬"),
+      makeIdea("date-027", "Postkarten an euch in 10 Jahren", "Schreibt euch Zukunftspost, steckt alles in Umschläge und versteckt sie an einem sicheren Ort.", "date", "Abend", ["Persönlich", "Schreiben", "Ritual"], "💌"),
+      makeIdea("date-028", "Karaoke zu Hause", "Baut ein kleines Bewertungssystem mit Kategorien wie Bühnenpräsenz, Mut und völlig unnötigem Pathos.", "date", "Abend", ["Musik", "Lustig", "Wohnung"], "🎤"),
+      makeIdea("date-029", "Sushi per YouTube lernen", "Besorgt die Basics, rollt euch durch ein Tutorial und esst am Ende die krummen Meisterwerke.", "date", "Abend", ["Kochen", "Lernen", "Food"], "🍣"),
+      makeIdea("date-030", "Brieffreund für einen Tag", "Hinterlasst euch über den Abend verteilt handgeschriebene Mini-Nachrichten in Jacken, Büchern oder Tassen.", "date", "Abend", ["Schreiben", "Überraschung", "Leise"], "✉️"),
+      makeIdea("date-031", "Buchseiten-Roulette", "Schlagt zufällig Seiten auf, lest laut vor und baut spontan Gespräche aus fremden Sätzen.", "date", "Abend", ["Bücher", "Ruhig", "Sprache"], "📖"),
+      makeIdea("date-032", "Hängematte und Lesestunde", "Spannt eine Hängematte auf, nehmt Snacks mit und verschwindet für ein paar Kapitel aus dem Rest des Tages.", "date", "Abend", ["Entspannt", "Natur", "Lesen"], "🪢"),
+      makeIdea("date-033", "Super8- und VHS-Abend", "Schaut alte Familienaufnahmen und kommentiert gemeinsam Frisuren, Räume und vergangene Versionen des Lebens.", "date", "Abend", ["Erinnerungen", "Familie", "Nostalgie"], "📼"),
+      makeIdea("date-034", "Sonnenuntergang fotografieren", "Sucht euch einen erhöhten Punkt, wartet auf das beste Licht und macht aus dem Abend einen kleinen Fotospaziergang.", "date", "Abend", ["Foto", "Aussicht", "Goldene Stunde"], "🌇"),
+      makeIdea("date-035", "Selbst erfundene Stadtführung", "Jede Person erfindet unterwegs spontan historische oder völlig falsche Fakten und führt die andere durch die Stadt.", "date", "2-3 Std", ["Stadt", "Impro", "Humor"], "🗺️"),
+      makeIdea("date-036", "Architektur-Challenge", "Sucht beim Spazieren gezielt Bauhaus, Historismus und alles dazwischen und diskutiert eure Lieblingsfassaden.", "date", "2-3 Std", ["Architektur", "Stadt", "Beobachten"], "🏛️"),
+      makeIdea("date-037", "Origami-Battle", "Wählt drei Figuren, stellt einen Timer und entscheidet am Ende zwischen Eleganz und Katastrophe.", "date", "2-3 Std", ["Papier", "Kreativ", "Wettkampf"], "🦢"),
+
+      makeIdea("short-001", "Schlauchboottour auf der Isar", "Packt nur das Nötigste ein und lasst euch für ein paar Stunden vom Wasser und der Stimmung treiben.", "short", "2-3 Std", ["Wasser", "Sommer", "Abenteuer"], "🛶"),
+      makeIdea("short-002", "Münchner Flohmärkte mit 10-Euro-Challenge", "Jede Person hat 10 Euro Budget, um dem anderen etwas Seltsames, Schönes oder Perfektes zu finden.", "short", "2-3 Std", ["Flohmarkt", "Budget", "Stadt"], "🧺"),
+      makeIdea("short-003", "Geocaching in München", "Sucht versteckte Punkte, lauft Umwege und seht die Stadt plötzlich als Schatzkarte.", "short", "2-3 Std", ["München", "Rätsel", "Outdoor"], "🧭"),
+      makeIdea("short-004", "Polaroid-Rallye Altstadt", "Definiert eine kleine Liste an Motiven und jagt mit Kamera oder Handy durch die Altstadt.", "short", "2-3 Std", ["Foto", "Rallye", "Stadt"], "📸"),
+      makeIdea("short-005", "Restaurant-Dart auf München-Karte", "Werft blind einen Pfeil oder Marker und esst dort, wo das Schicksal heute Abend hinzeigt.", "short", "2-3 Std", ["Food", "Zufall", "Stadt"], "🎯"),
+      makeIdea("short-006", "Kochduell mit gleichen Zutaten", "Beide bekommen dieselben Basics und müssen daraus in kurzer Zeit etwas Eigenes bauen.", "short", "2-3 Std", ["Kochen", "Wettkampf", "Küche"], "🍳"),
+      makeIdea("short-007", "Kurzfilm in einer Stunde", "Legt Genre, Requisite und Twist fest und dreht dann sofort los, bevor irgendwer zu viel nachdenkt.", "short", "2-3 Std", ["Film", "Kreativ", "DIY"], "🎥"),
+      makeIdea("short-008", "Frisbee im Englischen Garten", "Nehmt eine Decke mit, spielt mehrere Runden und bleibt danach einfach noch für Snacks liegen.", "short", "2-3 Std", ["Park", "Sport", "Sommer"], "🥏"),
+      makeIdea("short-009", "Vinyl-Flohmarkt", "Jede Person sucht der anderen eine Platte aus, die irgendwie überraschend gut passen könnte.", "short", "2-3 Std", ["Musik", "Flohmarkt", "Suche"], "💿"),
+      makeIdea("short-010", "Outfit-Blind-Einkauf", "Stellt euch mit kleinem Budget gegenseitig ein Outfit zusammen und präsentiert es wie einen Laufsteg-Fail oder Volltreffer.", "short", "2-3 Std", ["Mode", "Challenge", "Budget"], "🧥"),
+      makeIdea("short-011", "Museum für 1 Euro", "Nutzt einen günstigen Abend oder freien Eintritt und behandelt das Museum wie eine kuriose Schatzkammer.", "short", "2-3 Std", ["Museum", "Kultur", "Stadt"], "🖼️"),
+      makeIdea("short-012", "Menschenkicker oder Tischkicker", "Ein kleines Turnier mit sehr ernsten Regeln und sehr unernsten Kommentaren.", "short", "2-3 Std", ["Spiel", "Wettkampf", "Indoor"], "⚽"),
+      makeIdea("short-013", "Stadtmöbel-Tour", "Setzt euch eine Stunde lang alle fünf Minuten woanders hin und beobachtet, wie sich jeder Ort anders anfühlt.", "short", "2-3 Std", ["Stadt", "Beobachten", "Challenge"], "🪑"),
+      makeIdea("short-014", "Bierdosen-Regatta", "Bastelt kleine Boote aus Dosen oder Restmaterial und veranstaltet ein völlig unnötig episches Rennen.", "short", "2-3 Std", ["DIY", "Wasser", "Basteln"], "⛵"),
+      makeIdea("short-015", "GarageBand-Beat bauen", "Produziert in kurzer Zeit einen kleinen Beat und gebt ihm einen legendär übertriebenen Titel.", "short", "2-3 Std", ["Musik", "Digital", "Kreativ"], "🎛️"),
+      makeIdea("short-016", "Taschenlampen-Waldgeräusche-Bingo", "Geht nach Einbruch der Dunkelheit los und versucht, Geräusche und Zeichen der Nacht zu sammeln.", "short", "2-3 Std", ["Nacht", "Natur", "Bingo"], "🔦"),
+      makeIdea("short-017", "Sternenhimmel mit Karton-Teleskop", "Baut ein symbolisches Teleskop, legt euch raus und macht aus Beobachten ein kleines Ritual.", "short", "2-3 Std", ["Sterne", "DIY", "Ruhig"], "🔭"),
+      makeIdea("short-018", "Boulderzentrum", "Ein sportlicher Block Zeit, bei dem man schnell merkt, welche Routen Theorie und welche Realität sind.", "short", "2-3 Std", ["Sport", "Indoor", "Mut"], "🧗"),
+      makeIdea("short-019", "Escape Room selbst bauen", "Erstellt in der Wohnung oder im Garten kleine Rätsel und versucht, den anderen fair hereinzulegen.", "short", "2-3 Std", ["Rätsel", "DIY", "Spiel"], "🗝️"),
+      makeIdea("short-020", "Tagesreise zu einem Ort mit M", "Sucht euch spontan einen Ort mit M im Namen in erreichbarer Nähe und fahrt einfach los.", "short", "2-3 Std", ["Zufall", "Ausflug", "Buchstabe"], "🚌"),
+      makeIdea("short-021", "Schach im Café", "Sucht ein ruhiges Café, spielt mehrere schnelle Partien und kommentiert sie übertrieben professionell.", "short", "2-3 Std", ["Café", "Spiel", "Ruhig"], "♟️"),
+      makeIdea("short-022", "Secondhand-Buchtausch", "Jede Person sucht im Laden oder Regal ein Buch für die andere, nur nach Cover und Gefühl.", "short", "2-3 Std", ["Bücher", "Secondhand", "Stadt"], "📚"),
+      makeIdea("short-023", "Kleine Fotojagd nach Farben", "Wählt eine Palette aus drei Farben und sucht nur Motive, die genau dazu passen.", "short", "2-3 Std", ["Foto", "Challenge", "Farben"], "🎞️"),
+      makeIdea("short-024", "Café-Hopping mit Punktesystem", "Drei Stopps, drei Getränke, drei Bewertungen: Atmosphäre, Geschmack und Menschenbeobachtungsfaktor.", "short", "2-3 Std", ["Café", "Stadt", "Test"], "☕"),
+      makeIdea("short-025", "Street-Art-Safari", "Lauft gezielt durch Viertel, in denen Wände, Sticker und kleine Details zu einer offenen Galerie werden.", "short", "2-3 Std", ["Stadt", "Kunst", "Walking"], "🖌️"),
+      makeIdea("short-026", "Bookstore-Dating", "Trefft euch in einer Buchhandlung, verschwindet kurz in verschiedene Ecken und bringt euch dann gegenseitig Fundstücke mit.", "short", "2-3 Std", ["Bücher", "Leicht", "Date"], "🏬"),
+      makeIdea("short-027", "Spontaner Kuchen-Test", "Geht in zwei oder drei Cafés, teilt euch jeweils ein Stück und kürt die beste Theke des Tages.", "short", "2-3 Std", ["Food", "Süß", "Café"], "🍰"),
+      makeIdea("short-028", "Mini-Picknick auf unbekanntem Platz", "Kauft spontan Kleinigkeiten ein und sucht dann einen Ort, an dem ihr noch nie bewusst gesessen habt.", "short", "2-3 Std", ["Picknick", "Spontan", "Draußen"], "🧺"),
+      makeIdea("short-029", "Keramik bemalen", "Wenn ihr ein Studio findet: perfekt. Sonst improvisiert ihr mit günstigen Tassen und Farben zu Hause.", "short", "2-3 Std", ["Kreativ", "Handwerk", "Ruhig"], "🏺"),
+      makeIdea("short-030", "Ein Wort, ein Weg", "Definiert ein Thema wie Blau, Rund oder Laut und folgt nur Hinweisen, die dazu passen.", "short", "2-3 Std", ["Spiel", "Stadt", "Impro"], "🌀"),
+      makeIdea("short-031", "Parkbank-Interviews", "Überlegt euch zehn Fragen und beantwortet sie auf wechselnden Parkbänken immer wieder neu.", "short", "2-3 Std", ["Gespräch", "Ruhig", "Draußen"], "🪟"),
+      makeIdea("short-032", "Backen ohne Rezept", "Legt nur ein Grundziel fest und verhandelt den Rest spontan zwischen Chaos und Intuition.", "short", "2-3 Std", ["Backen", "Impro", "Küche"], "🧁"),
+      makeIdea("short-033", "Kiosk-Tasting", "Jede Person stellt aus Kiosk-Snacks und Getränken ein absurdes Menü für die andere zusammen.", "short", "2-3 Std", ["Snacks", "Test", "Spaß"], "🥤"),
+      makeIdea("short-034", "Wortsammler-Spaziergang", "Notiert unterwegs die besten Schilder, Wortfetzen und Graffiti-Sätze und baut am Ende ein Mini-Gedicht daraus.", "short", "2-3 Std", ["Worte", "Stadt", "Kreativ"], "📝"),
+      makeIdea("short-035", "Kräuter sammeln und Limo machen", "Kauft oder sammelt passende Kräuter und mischt eure eigene Sommer-Limo.", "short", "2-3 Std", ["DIY", "Getränk", "Sommer"], "🌿"),
+      makeIdea("short-036", "Record-Store Listening Session", "Hört in fremde Musik rein und versucht gegenseitig einen Song zu finden, der exakt zum anderen passt.", "short", "2-3 Std", ["Musik", "Entdecken", "Stadt"], "🎧"),
+      makeIdea("short-037", "Mini-Zine zusammenfalten", "Schreibt und zeichnet acht kleine Felder voll und faltet daraus euer eigenes absurdes Heft.", "short", "2-3 Std", ["Papier", "Design", "DIY"], "🗞️"),
+      makeIdea("short-038", "Bahnfahren ohne Ziel", "Steigt in eine Linie, bleibt sitzen bis euch ein Ort neugierig macht, und steigt dort einfach aus.", "short", "2-3 Std", ["ÖPNV", "Spontan", "Stadt"], "🚇"),
+
+      makeIdea("fullday-001", "Tagesausflug nach Salzburg", "Früh los, viel laufen, zwischendrin Kaffee und am Abend mit einer ganzen Reihe kleiner Bilder zurückkommen.", "fullday", "Ganzer Tag", ["Zug", "Reise", "Altstadt"], "🚆"),
+      makeIdea("fullday-002", "Nachts mit dem Fahrrad durch leeres München", "Plant eine Route mit Aussichtspunkten und Snack-Stopps und erlebt die Stadt in einem ganz anderen Takt.", "fullday", "Ganzer Tag", ["München", "Fahrrad", "Nacht"], "🚲"),
+      makeIdea("fullday-003", "Strandbad Starnberg bis zum Sonnenuntergang", "Schwimmen, lesen, nichts tun und erst gehen, wenn das Licht wirklich kippt.", "fullday", "Ganzer Tag", ["See", "Sommer", "Entspannt"], "🏖️"),
+      makeIdea("fullday-004", "Große Flohmarkt-Tour", "Kombiniert mehrere Märkte, Frühstück unterwegs und eine Challenge, nur mit kuriosen Funden zurückzukommen.", "fullday", "Ganzer Tag", ["Flohmarkt", "Stadt", "Sammeln"], "🛍️"),
+      makeIdea("fullday-005", "München per Brücken erkunden", "Lauft oder radelt eine selbstgebaute Route nur entlang von Brücken, Ufern und Übergängen.", "fullday", "Ganzer Tag", ["Route", "Stadt", "Wasser"], "🌉"),
+      makeIdea("fullday-006", "Polaroid-Tag am ganzen Fluss", "Definiert zehn Motive und dokumentiert einen Tag, der am Ende wie ein eigenes kleines Heft wirkt.", "fullday", "Ganzer Tag", ["Foto", "Dokumentation", "Sommer"], "📷"),
+      makeIdea("fullday-007", "Zugfahrt ins Ungeplante", "Nehmt eine Regionalbahn, steigt irgendwo aus, wo ihr noch nie wart, und baut den Tag von dort aus neu auf.", "fullday", "Ganzer Tag", ["Zug", "Spontan", "Ausflug"], "🚉"),
+      makeIdea("fullday-008", "Seen-Hopping", "Verbindet zwei oder drei Seen an einem Tag und sammelt pro Ort einen kurzen Moment oder ein kleines Foto.", "fullday", "Ganzer Tag", ["Wasser", "Sommer", "Roadtrip"], "🌊"),
+      makeIdea("fullday-009", "Vintage-Kino und lange Wege", "Plant den Tag so, dass er mit einer Vorführung endet und davor aus Cafés, Straßen und Gesprächen besteht.", "fullday", "Ganzer Tag", ["Film", "Stadt", "Atmosphäre"], "🎞️"),
+      makeIdea("fullday-010", "Münchner Höfe entdecken", "Sucht Innenhöfe, Durchgänge, versteckte Treppen und macht aus der Stadt eine Reihe geheimer Kulissen.", "fullday", "Ganzer Tag", ["Architektur", "Stadt", "Entdecken"], "🏙️"),
+      makeIdea("fullday-011", "Picknick-zu-Picknick-Tag", "Jede Station bekommt einen eigenen Snack und einen anderen Vibe: Park, Ufer, Treppe, Aussicht.", "fullday", "Ganzer Tag", ["Picknick", "Sommer", "Route"], "🍇"),
+      makeIdea("fullday-012", "Fahrrad und Fotoheft", "Macht aus dem Tag ein Motivprojekt mit klarer Bildidee, zum Beispiel Türen, Himmel oder Spiegelungen.", "fullday", "Ganzer Tag", ["Fahrrad", "Foto", "Projekt"], "📔"),
+      makeIdea("fullday-013", "DIY-Tarot-Tag", "Gestaltet aus Beobachtungen und Fundstücken eure eigenen Karten und deutet den Tag wie ein Spiel.", "fullday", "Ganzer Tag", ["Kreativ", "Symbolik", "Collage"], "🔮"),
+      makeIdea("fullday-014", "Markthallen-Tag", "Frühstück dort, wo es gut riecht, probiert Neues und lauft dann mit Essen, Ideen und zu viel Brot weiter.", "fullday", "Ganzer Tag", ["Food", "Markt", "Bummeln"], "🥖"),
+      makeIdea("fullday-015", "Schlosspark und Notizbuch", "Nehmt einen Ort mit Weite, Licht und alten Wegen und sammelt dort kleine Beobachtungen in einem Heft.", "fullday", "Ganzer Tag", ["Park", "Ruhig", "Schreiben"], "📓"),
+      makeIdea("fullday-016", "Museum plus spätes Essen", "Ein voller Kulturblock am Tag, dann etwas Gutes essen und alles in Ruhe zerpflücken.", "fullday", "Ganzer Tag", ["Kultur", "Food", "Stadt"], "🏺"),
+      makeIdea("fullday-017", "Buchladen-Crawl", "Besucht mehrere Läden, sammelt Fundstücke, liest an ungewöhnlichen Orten weiter und nehmt nur ein Buch mit.", "fullday", "Ganzer Tag", ["Bücher", "Stadt", "Langsam"], "📚"),
+      makeIdea("fullday-018", "Stadtteil für einen Tag", "Wählt bewusst nur ein Viertel und lebt darin komplett: Kaffee, Spaziergang, Mittag, kleine Umwege, Abenddrink.", "fullday", "Ganzer Tag", ["Kiez", "Entdecken", "Stadt"], "🏘️"),
+      makeIdea("fullday-019", "Kunst- und Skizzen-Tag", "Nehmt Papier mit und macht an verschiedenen Orten schnelle Skizzen, ohne euch von Qualität bremsen zu lassen.", "fullday", "Ganzer Tag", ["Zeichnen", "Unterwegs", "Kreativ"], "🖍️"),
+      makeIdea("fullday-020", "Wanderung mit Audio-Notizen", "Nehmt unterwegs kurze Sprachmemos auf und baut daraus später euren akustischen Tagesfilm.", "fullday", "Ganzer Tag", ["Wandern", "Audio", "Natur"], "🥾"),
+      makeIdea("fullday-021", "Isar von früh bis spät", "Startet mit Kaffee, folgt dem Wasser, schwimmt vielleicht und lasst den Tag irgendwo am Rand des Flusses auslaufen.", "fullday", "Ganzer Tag", ["Isar", "Sommer", "Laufen"], "🏞️"),
+      makeIdea("fullday-022", "Analoger Tag", "Lasst Handys fast komplett weg, nutzt nur Papier, Uhrzeitgefühl und spontane Absprachen.", "fullday", "Ganzer Tag", ["Digital Detox", "Langsam", "Experiment"], "📮"),
+      makeIdea("fullday-023", "Kulinarische Stadtkarte", "Setzt euch drei bis vier Essensstopps in verschiedenen Vierteln und verbindet sie zu einer Genusstour.", "fullday", "Ganzer Tag", ["Food", "Stadt", "Tour"], "🍜"),
+      makeIdea("fullday-024", "Tagestrip ins Umland per Regionalzug", "Sucht euch eine Linie, die schön klingt, und baut vor Ort euren Tag nur nach Stimmung zusammen.", "fullday", "Ganzer Tag", ["Zug", "Umland", "Spontan"], "🧳"),
+      makeIdea("fullday-025", "Botanischer Garten und Café", "Ein langsamer Tag zwischen Gewächshäusern, Notizen, Pflanzenformen und ruhigen Gesprächen.", "fullday", "Ganzer Tag", ["Natur", "Gewächshaus", "Ruhig"], "🌿"),
+      makeIdea("fullday-026", "Schwimmbad-Retro-Tag", "Packt Snacks, Karten und Sonnencreme ein und behandelt einen simplen Badetag wie einen kleinen Sommerurlaub.", "fullday", "Ganzer Tag", ["Sommer", "Wasser", "Leicht"], "🏊"),
+      makeIdea("fullday-027", "Radeln zu drei Eisdielen", "Verbindet Strecke und Genuss und vergleicht am Ende sehr ernsthaft Textur, Sorte und Gesamtwirkung.", "fullday", "Ganzer Tag", ["Fahrrad", "Eis", "Tour"], "🍦"),
+      makeIdea("fullday-028", "Eigenes Stadtmagazin sammeln", "Macht Fotos, sammelt Sätze, Flyer, Tickets und baut daraus abends eine Titelseite eures Tages.", "fullday", "Ganzer Tag", ["Collage", "Design", "Stadt"], "📰"),
+      makeIdea("fullday-029", "See, Karten, Sonnenuntergang", "Mehr braucht es oft nicht: hinfahren, baden, Karten spielen und möglichst spät zurück.", "fullday", "Ganzer Tag", ["See", "Spiele", "Entspannt"], "🃏"),
+      makeIdea("fullday-030", "Bahnhof-zu-Bahnhof-Tour", "Verbindet mehrere Stationen zu einem absichtlich unlogischen Tag und entdeckt dabei überraschende Zwischenräume.", "fullday", "Ganzer Tag", ["Zug", "Route", "Urban"], "🚏"),
+      makeIdea("fullday-031", "Tagesprojekt Collage", "Sammelt unterwegs Papier, Worte und Bilder und klebt am Abend alles zu einer echten Erinnerungsfläche zusammen.", "fullday", "Ganzer Tag", ["Collage", "DIY", "Papier"], "✂️"),
+      makeIdea("fullday-032", "Stadtrand-Abenteuer", "Fahrt bewusst an den Rand der Stadt, wo München plötzlich ganz anders aussieht, und lauft von dort los.", "fullday", "Ganzer Tag", ["Randgebiete", "Entdecken", "Walk"], "🧱"),
+      makeIdea("fullday-033", "Kirchturm- und Aussichtspunkt-Tag", "Sammelt mehrere erhöhte Perspektiven und schaut, wie eine Stadt aus verschiedenen Höhen anders wirkt.", "fullday", "Ganzer Tag", ["Aussicht", "Architektur", "Tagestour"], "🔔"),
+      makeIdea("fullday-034", "Sommerregen-Tag", "Lasst euch vom Wetter nicht abhalten, sondern plant bewusst Cafés, Wege und Orte, die mit Regen noch besser funktionieren.", "fullday", "Ganzer Tag", ["Regen", "Atmosphäre", "Stadt"], "☔"),
+      makeIdea("fullday-035", "Morgenmarkt bis Nachtfahrt", "Beginnt ganz früh, sammelt über den Tag Eindrücke und endet mit einer letzten ruhigen Fahrt zurück.", "fullday", "Ganzer Tag", ["Tagesbogen", "Stadt", "Lang"], "🌙"),
+      makeIdea("fullday-036", "Filmreifer Picknick-Dreh", "Dreht tagsüber kleine Szenen an schönen Orten und macht daraus abends einen Mini-Reisefilm.", "fullday", "Ganzer Tag", ["Film", "Picknick", "Kreativ"], "🎬"),
+      makeIdea("fullday-037", "Blauer-Tag", "Wählt die Farbe Blau als Leitmotiv und jagt ihr vom Morgen bis zum Abend durch Stadt, Kleidung, Essen und Himmel hinterher.", "fullday", "Ganzer Tag", ["Farbkonzept", "Foto", "Spiel"], "🔵")
+    ];
+
+    const state = {
+      activeCategory: "date",
+      currentIdeaId: null,
+      unlockedAdmin: false,
+      easterEggEnabled: localStorage.getItem(STORAGE_KEYS.easterEgg) === "true"
+    };
+
+    const elements = {
+      categoryButtons: document.getElementById("categoryButtons"),
+      controlStamp: document.getElementById("controlStamp"),
+      ideaCard: document.getElementById("ideaCard"),
+      cardEmoji: document.getElementById("cardEmoji"),
+      cardTitle: document.getElementById("cardTitle"),
+      cardSubtitle: document.getElementById("cardSubtitle"),
+      cardDescription: document.getElementById("cardDescription"),
+      cardCategory: document.getElementById("cardCategory"),
+      cardDuration: document.getElementById("cardDuration"),
+      cardTags: document.getElementById("cardTags"),
+      cardCount: document.getElementById("cardCount"),
+      cardSource: document.getElementById("cardSource"),
+      generateButton: document.getElementById("generateButton"),
+      addIdeaButton: document.getElementById("addIdeaButton"),
+      ideaModal: document.getElementById("ideaModal"),
+      ideaForm: document.getElementById("ideaForm"),
+      adminModal: document.getElementById("adminModal"),
+      adminGate: document.getElementById("adminGate"),
+      adminContent: document.getElementById("adminContent"),
+      adminPassword: document.getElementById("adminPassword"),
+      adminFeedback: document.getElementById("adminFeedback"),
+      adminLoginButton: document.getElementById("adminLoginButton"),
+      adminSearch: document.getElementById("adminSearch"),
+      adminFilter: document.getElementById("adminFilter"),
+      adminAddForm: document.getElementById("adminAddForm"),
+      adminTableBody: document.getElementById("adminTableBody"),
+      adminCount: document.getElementById("adminCount"),
+      exportButton: document.getElementById("exportButton"),
+      adminToggle: document.getElementById("adminToggle"),
+      logoButton: document.getElementById("logoButton")
+    };
+
+    function readStorage(key, fallback) {
+      try {
+        const value = localStorage.getItem(key);
+        return value ? JSON.parse(value) : fallback;
+      } catch (error) {
+        return fallback;
+      }
+    }
+
+    function writeStorage(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function getEditedIdeas() {
+      return readStorage(STORAGE_KEYS.editedIdeas, {});
+    }
+
+    function getDeletedIdeas() {
+      return readStorage(STORAGE_KEYS.deletedIdeas, []);
+    }
+
+    function getCustomIdeas() {
+      return readStorage(STORAGE_KEYS.customIdeas, []);
+    }
+
+    function getHistory() {
+      return readStorage(STORAGE_KEYS.history, { date: [], short: [], fullday: [] });
+    }
+
+    function saveHistory(history) {
+      writeStorage(STORAGE_KEYS.history, history);
+    }
+
+    function slugify(text) {
+      return text
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+    }
+
+    function getAllIdeas() {
+      const edited = getEditedIdeas();
+      const deleted = new Set(getDeletedIdeas());
+      const custom = getCustomIdeas();
+      const mergedOriginal = originalIdeas
+        .filter((idea) => !deleted.has(idea.id))
+        .map((idea) => ({ ...idea, ...(edited[idea.id] || {}) }));
+
+      const mergedCustom = custom
+        .filter((idea) => !deleted.has(idea.id))
+        .map((idea) => ({ ...idea, ...(edited[idea.id] || {}) }));
+
+      return [...mergedOriginal, ...mergedCustom];
+    }
+
+    function getIdeasByCategory(categoryId) {
+      return getAllIdeas().filter((idea) => idea.category === categoryId);
+    }
+
+    function categoryLabel(categoryId) {
+      const category = categories.find((entry) => entry.id === categoryId);
+      return category ? category.label : categoryId;
+    }
+
+    function sourceLabel(idea) {
+      return idea.isUserAdded ? "Eigene Idee" : "Original-Sammlung";
+    }
+
+    function updateStats() {
+      const allIdeas = getAllIdeas();
+      const categoryIdeas = getIdeasByCategory(state.activeCategory);
+      elements.cardCount.textContent = allIdeas.length + " Ideen im Pool";
+      elements.controlStamp.textContent = categoryLabel(state.activeCategory) + " · " + categoryIdeas.length + " Ideen verfügbar";
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function setCardIdea(idea) {
+      elements.ideaCard.style.setProperty("--random-rotation", "0deg");
+      elements.cardEmoji.textContent = idea.emoji;
+      elements.cardTitle.textContent = idea.title;
+      elements.cardSubtitle.textContent = sourceLabel(idea) + " · " + categoryLabel(idea.category);
+      elements.cardDescription.textContent = idea.description;
+      elements.cardSource.textContent = sourceLabel(idea);
+      state.currentIdeaId = idea.id;
+    }
+
+    function animateCard(nextIdea) {
+      elements.ideaCard.classList.add("is-animating", "exit");
+      window.setTimeout(() => {
+        setCardIdea(nextIdea);
+        elements.ideaCard.classList.remove("exit");
+        elements.ideaCard.classList.add("enter");
+      }, 220);
+
+      window.setTimeout(() => {
+        elements.ideaCard.classList.remove("enter", "is-animating");
+      }, 720);
+    }
+
+    function pickIdea(categoryId) {
+      const ideas = getIdeasByCategory(categoryId);
+      if (!ideas.length) {
+        return null;
+      }
+
+      const history = getHistory();
+      const seenIds = new Set(history[categoryId] || []);
+      let available = ideas.filter((idea) => !seenIds.has(idea.id));
+
+      if (!available.length) {
+        history[categoryId] = [];
+        saveHistory(history);
+        available = [...ideas];
+      }
+
+      const pool = available.filter((idea) => idea.id !== state.currentIdeaId);
+      const candidates = pool.length ? pool : available;
+      const nextIdea = candidates[Math.floor(Math.random() * candidates.length)];
+      history[categoryId] = [...(history[categoryId] || []), nextIdea.id];
+      saveHistory(history);
+
+      return nextIdea;
+    }
+
+    function generateIdea() {
+      const nextIdea = pickIdea(state.activeCategory);
+      if (!nextIdea) {
+        return;
+      }
+      animateCard(nextIdea);
+      updateStats();
+    }
+
+    function resetCard() {
+      const category = categories.find((entry) => entry.id === state.activeCategory);
+      elements.ideaCard.style.setProperty("--random-rotation", "0deg");
+      elements.cardEmoji.textContent = category.icon;
+      elements.cardTitle.textContent = category.label;
+      elements.cardSubtitle.textContent = category.description;
+      elements.cardDescription.textContent = "Drück auf \"Spark'it\" und hol dir eine Aktivität aus dieser Kategorie. Wiederholungen werden erst zugelassen, wenn du den Pool leer gezogen hast.";
+      elements.cardSource.textContent = "Bereit für Zufall";
+      state.currentIdeaId = null;
+      updateStats();
+    }
+
+    function renderCategoryButtons() {
+      elements.categoryButtons.innerHTML = categories
+        .map((category) => {
+          const activeClass = category.id === state.activeCategory ? " active" : "";
+          return '<button class="category-btn' + activeClass + '" data-category="' + category.id + '"><span class="mini-label">' + category.icon + " Kategorie</span><strong>" + escapeHtml(category.label) + '</strong><span>' + escapeHtml(category.description) + " · " + escapeHtml(category.durationHint) + "</span></button>";
+        })
+        .join("");
+    }
+
+    function openModal(element) {
+      element.classList.add("open");
+      element.setAttribute("aria-hidden", "false");
+    }
+
+    function closeModal(element) {
+      element.classList.remove("open");
+      element.setAttribute("aria-hidden", "true");
+    }
+
+    function buildCategoryOptions(selectElement) {
+      selectElement.innerHTML = categories
+        .map((category) => '<option value="' + category.id + '">' + escapeHtml(category.label) + "</option>")
+        .join("");
+    }
+
+    function addCustomIdea(payload) {
+      const customIdeas = getCustomIdeas();
+      const idBase = "custom-" + slugify(payload.title || "idee");
+      const id = idBase + "-" + Date.now();
+      customIdeas.unshift({
+        id,
+        title: payload.title,
+        description: payload.description,
+        category: payload.category,
+        duration: "Flexibel",
+        tags: ["Eigene Idee", categoryLabel(payload.category), "Persönlich"],
+        emoji: payload.emoji,
+        isUserAdded: true
+      });
+      writeStorage(STORAGE_KEYS.customIdeas, customIdeas);
+    }
+
+    function saveAdminEdit(ideaId, patch) {
+      const edited = getEditedIdeas();
+      edited[ideaId] = { ...(edited[ideaId] || {}), ...patch };
+      writeStorage(STORAGE_KEYS.editedIdeas, edited);
+    }
+
+    function deleteIdea(ideaId) {
+      const deleted = getDeletedIdeas();
+      if (!deleted.includes(ideaId)) {
+        deleted.push(ideaId);
+        writeStorage(STORAGE_KEYS.deletedIdeas, deleted);
+      }
+    }
+
+    function renderAdmin() {
+      if (!state.unlockedAdmin) {
+        elements.adminGate.classList.remove("hidden");
+        elements.adminContent.classList.add("hidden");
+        return;
+      }
+
+      elements.adminGate.classList.add("hidden");
+      elements.adminContent.classList.remove("hidden");
+
+      const filter = elements.adminFilter.value || "all";
+      const term = (elements.adminSearch.value || "").trim().toLowerCase();
+      const ideas = getAllIdeas().filter((idea) => {
+        const matchesFilter = filter === "all" ? true : idea.category === filter;
+        const haystack = (idea.title + " " + idea.description).toLowerCase();
+        const matchesTerm = !term || haystack.includes(term);
+        return matchesFilter && matchesTerm;
+      });
+
+      elements.adminCount.textContent = ideas.length + " Einträge";
+      elements.adminTableBody.innerHTML = ideas
+        .map((idea) => {
+          return [
+            "<tr>",
+            "<td><input data-field=\"emoji\" data-id=\"" + escapeHtml(idea.id) + "\" value=\"" + escapeHtml(idea.emoji) + "\" maxlength=\"4\"></td>",
+            "<td><input data-field=\"title\" data-id=\"" + escapeHtml(idea.id) + "\" value=\"" + escapeHtml(idea.title) + "\" maxlength=\"80\"></td>",
+            "<td><textarea data-field=\"description\" data-id=\"" + escapeHtml(idea.id) + "\" maxlength=\"220\">" + escapeHtml(idea.description) + "</textarea></td>",
+            "<td><select data-field=\"category\" data-id=\"" + escapeHtml(idea.id) + "\">" + categories.map((category) => '<option value="' + category.id + '"' + (category.id === idea.category ? " selected" : "") + ">" + escapeHtml(category.label) + "</option>").join("") + "</select></td>",
+            "<td><input data-field=\"duration\" data-id=\"" + escapeHtml(idea.id) + "\" value=\"" + escapeHtml(idea.duration) + "\" maxlength=\"24\"></td>",
+            "<td>" + escapeHtml(sourceLabel(idea)) + "</td>",
+            "<td><div class=\"table-actions\"><button class=\"icon-btn\" type=\"button\" data-save=\"" + escapeHtml(idea.id) + "\">Speichern</button><button class=\"icon-btn\" type=\"button\" data-delete=\"" + escapeHtml(idea.id) + "\">Löschen</button></div></td>",
+            "</tr>"
+          ].join("");
+        })
+        .join("");
+    }
+
+    function exportIdeas() {
+      const blob = new Blob([JSON.stringify(getAllIdeas(), null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "spark-ideen.json";
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function unlockAdmin() {
+      if (elements.adminPassword.value === "enno") {
+        state.unlockedAdmin = true;
+        elements.adminFeedback.textContent = "Archiv geöffnet.";
+        renderAdmin();
+        return;
+      }
+
+      elements.adminFeedback.textContent = "Falsches Passwort.";
+    }
+
+    function seedSelects() {
+      buildCategoryOptions(elements.ideaForm.elements.category);
+      buildCategoryOptions(elements.adminAddForm.elements.category);
+      elements.adminFilter.innerHTML = '<option value="all">Alle Kategorien</option>' +
+        categories.map((category) => '<option value="' + category.id + '">' + escapeHtml(category.label) + "</option>").join("");
+    }
+
+    function bindEvents() {
+      elements.categoryButtons.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-category]");
+        if (!button) {
+          return;
+        }
+        state.activeCategory = button.dataset.category;
+        renderCategoryButtons();
+        resetCard();
+      });
+
+      elements.generateButton.addEventListener("click", generateIdea);
+      elements.addIdeaButton.addEventListener("click", () => openModal(elements.ideaModal));
+      elements.adminToggle.addEventListener("click", () => {
+        state.unlockedAdmin = false;
+        elements.adminPassword.value = "";
+        elements.adminFeedback.textContent = "Passwort erforderlich.";
+        openModal(elements.adminModal);
+        renderAdmin();
+      });
+
+      elements.logoButton.addEventListener("click", () => {
+        state.easterEggEnabled = !state.easterEggEnabled;
+        localStorage.setItem(STORAGE_KEYS.easterEgg, String(state.easterEggEnabled));
+        document.body.style.filter = state.easterEggEnabled ? "saturate(1.08) hue-rotate(-8deg)" : "";
+        elements.controlStamp.textContent = state.easterEggEnabled ? "Easter Egg aktiv · Das Logo hat die Sonne gedreht" : categoryLabel(state.activeCategory) + " · " + getIdeasByCategory(state.activeCategory).length + " Ideen verfügbar";
+      });
+
+      elements.logoButton.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          elements.logoButton.click();
+        }
+      });
+
+      document.querySelectorAll("[data-close]").forEach((button) => {
+        button.addEventListener("click", () => {
+          closeModal(document.getElementById(button.dataset.close));
+        });
+      });
+
+      [elements.ideaModal, elements.adminModal].forEach((overlay) => {
+        overlay.addEventListener("click", (event) => {
+          if (event.target === overlay) {
+            closeModal(overlay);
+          }
+        });
+      });
+
+      elements.ideaForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const formData = new FormData(elements.ideaForm);
+        addCustomIdea({
+          title: formData.get("title").trim(),
+          description: formData.get("description").trim(),
+          category: formData.get("category"),
+          emoji: formData.get("emoji").trim()
+        });
+        elements.ideaForm.reset();
+        updateStats();
+        renderAdmin();
+        closeModal(elements.ideaModal);
+      });
+
+      elements.adminLoginButton.addEventListener("click", unlockAdmin);
+      elements.adminPassword.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          unlockAdmin();
+        }
+      });
+
+      elements.adminSearch.addEventListener("input", renderAdmin);
+      elements.adminFilter.addEventListener("change", renderAdmin);
+      elements.exportButton.addEventListener("click", exportIdeas);
+
+      elements.adminAddForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const formData = new FormData(elements.adminAddForm);
+        addCustomIdea({
+          title: formData.get("title").trim(),
+          description: formData.get("description").trim(),
+          category: formData.get("category"),
+          emoji: formData.get("emoji").trim(),
+          duration: formData.get("duration").trim()
+        });
+        elements.adminAddForm.reset();
+        renderAdmin();
+        updateStats();
+      });
+
+      elements.adminTableBody.addEventListener("click", (event) => {
+        const saveButton = event.target.closest("[data-save]");
+        const deleteButton = event.target.closest("[data-delete]");
+
+        if (saveButton) {
+          const ideaId = saveButton.dataset.save;
+          const inputs = [...elements.adminTableBody.querySelectorAll('[data-id="' + ideaId + '"]')];
+          const patch = {};
+          inputs.forEach((input) => {
+            patch[input.dataset.field] = input.value.trim();
+          });
+          if (!patch.tags) {
+            patch.tags = [
+              patch.category ? categoryLabel(patch.category) : categoryLabel(state.activeCategory),
+              patch.duration || "Flexibel",
+              "Bearbeitet"
+            ];
+          }
+          saveAdminEdit(ideaId, patch);
+          renderAdmin();
+          updateStats();
+          if (state.currentIdeaId === ideaId) {
+            const current = getAllIdeas().find((idea) => idea.id === ideaId);
+            if (current) {
+              setCardIdea(current);
+            }
+          }
+        }
+
+        if (deleteButton) {
+          deleteIdea(deleteButton.dataset.delete);
+          renderAdmin();
+          updateStats();
+          if (state.currentIdeaId === deleteButton.dataset.delete) {
+            resetCard();
+          }
+        }
+      });
+    }
+
+    function init() {
+      seedSelects();
+      renderCategoryButtons();
+      bindEvents();
+      resetCard();
+      renderAdmin();
+      updateStats();
+      if (state.easterEggEnabled) {
+        document.body.style.filter = "saturate(1.08) hue-rotate(-8deg)";
+      }
+    }
+
+    // Image Upload and Gallery Functions
+    STORAGE_KEYS.uploadedImages = 'spark-uploaded-images';
+
+    function getUploadedImages() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.uploadedImages) || '[]');
+      } catch {
+        return [];
+      }
+    }
+
+    function saveUploadedImages(images) {
+      localStorage.setItem(STORAGE_KEYS.uploadedImages, JSON.stringify(images));
+    }
+
+    function addImageToGallery(imageData, filename) {
+      const images = getUploadedImages();
+      const newImage = {
+        id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+        data: imageData,
+        filename: filename,
+        uploadedAt: new Date().toISOString()
+      };
+      images.unshift(newImage);
+      saveUploadedImages(images);
+      renderGallery();
+    }
+
+    function deleteImageFromGallery(imageId) {
+      const images = getUploadedImages().filter(img => img.id !== imageId);
+      saveUploadedImages(images);
+      renderGallery();
+    }
+
+    function renderGallery() {
+      const galleryGrid = document.getElementById('galleryGrid');
+      const images = getUploadedImages();
+      
+      if (images.length === 0) {
+        galleryGrid.innerHTML = '<div class="empty-gallery">Noch keine Bilder hochgeladen. Lade deine Erinnerungen hoch!</div>';
+        return;
+      }
+
+      galleryGrid.innerHTML = images.map((image, index) => {
+        const rotation = (index % 3 - 1) * 6; // -6, 0, or 6 degrees rotation
+        return `
+          <div class="gallery-item" style="--rotation: ${rotation}">
+            <img src="${image.data}" alt="${image.filename}" loading="lazy">
+            <button class="delete-btn" data-image-id="${image.id}" aria-label="Bild löschen">×</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function handleImageUpload(files) {
+      Array.from(files).forEach(file => {
+        if (!file.type.startsWith('image/')) {
+          console.warn('Nur Bilddateien sind erlaubt:', file.name);
+          return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) { // 10MB limit
+          console.warn('Datei zu groß (max 10MB):', file.name);
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          addImageToGallery(e.target.result, file.name);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Initialize image upload functionality
+    function initImageUpload() {
+      const uploadArea = document.getElementById('uploadArea');
+      const uploadInput = document.getElementById('imageUpload');
+      const uploadPrompt = document.getElementById('uploadPrompt');
+
+      // Click to upload
+      uploadArea.addEventListener('click', () => {
+        uploadInput.click();
+      });
+
+      // File selection
+      uploadInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+          handleImageUpload(e.target.files);
+          uploadInput.value = ''; // Reset input
+        }
+      });
+
+      // Drag and drop
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+      });
+
+      uploadArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+      });
+
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          handleImageUpload(files);
+        }
+      });
+
+      // Gallery delete functionality
+      document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-btn')) {
+          const imageId = e.target.dataset.imageId;
+          if (confirm('Möchtest du dieses Bild wirklich löschen?')) {
+            deleteImageFromGallery(imageId);
+          }
+        }
+      });
+
+      // Render initial gallery
+      renderGallery();
+    }
+
+    // Update init function
+    function init() {
+      seedSelects();
+      renderCategoryButtons();
+      bindEvents();
+      resetCard();
+      renderAdmin();
+      updateStats();
+      initImageUpload();
+      if (state.easterEggEnabled) {
+        document.body.style.filter = "saturate(1.08) hue-rotate(-8deg)";
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
