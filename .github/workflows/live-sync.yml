@@ -23,11 +23,6 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-
     - name: Check for data file
       id: check_data
       run: |
@@ -46,44 +41,15 @@ jobs:
 
     - name: Update HTML with latest data
       run: |
-        # Extract data from JSON file
-        node -e "
-          const fs = require('fs');
-          const data = JSON.parse(fs.readFileSync('spark-data.json', 'utf8'));
-          
-          // Read current HTML
-          let html = fs.readFileSync('index.html', 'utf8');
-          
-          // Find the data injection point
-          const dataInjectionPoint = '// AUTO-LIVE-SYNC DATA INJECTION POINT';
-          const injectionIndex = html.indexOf(dataInjectionPoint);
-          
-          if (injectionIndex > 0) {
-            // Create data injection script
-            const dataScript = \`
-            // AUTO-LIVE-SYNC DATA INJECTION POINT
-            window.sparkInitialData = \${JSON.stringify(data)};
-            console.log('Live-Sync: Initial data loaded from HTML, version', \${data.version});
-            \`;
-            
-            // Replace existing injection or add new one
-            const startIndex = html.indexOf('// AUTO-LIVE-SYNC DATA INJECTION POINT');
-            const endIndex = html.indexOf('\\n', startIndex);
-            
-            if (startIndex > 0 && endIndex > startIndex) {
-              html = html.substring(0, startIndex) + dataScript + html.substring(endIndex);
-            } else {
-              // Add injection point before closing script tag
-              const lastScriptIndex = html.lastIndexOf('</script>');
-              if (lastScriptIndex > 0) {
-                html = html.substring(0, lastScriptIndex) + dataScript + '\\n' + html.substring(lastScriptIndex);
-              }
-            }
-            
-            fs.writeFileSync('index.html', html);
-            console.log('HTML updated with latest data');
-          }
-        "
+        # Read current data
+        DATA_VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('spark-data.json', 'utf8')).version)")
+        DATA_JSON=$(node -e "console.log(JSON.stringify(JSON.parse(require('fs').readFileSync('spark-data.json', 'utf8'))))")
+        
+        # Update HTML with new data
+        sed -i "s|window.sparkInitialData = .*;|window.sparkInitialData = $DATA_JSON;|g" index.html
+        sed -i "s|console.log('Live-Sync: Initial data loaded from HTML, version', .*);|console.log('Live-Sync: Initial data loaded from HTML, version', $DATA_VERSION);|g" index.html
+        
+        echo "HTML updated with version $DATA_VERSION"
 
     - name: Update timestamp and version
       run: |
@@ -103,11 +69,3 @@ jobs:
         git add index.html spark-data.json
         git diff --staged --quiet || git commit -m "Live sync update - v$(node -e "console.log(JSON.parse(require('fs').readFileSync('spark-data.json', 'utf8')).version)") [skip ci]"
         git push
-
-    - name: Deploy to GitHub Pages
-      if: success()
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./
-        publish_branch: gh-pages
