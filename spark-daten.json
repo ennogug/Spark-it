@@ -1,0 +1,361 @@
+{
+  "customIdeas": [
+    {
+      "id": "custom-verschworungstheorie-abend-1776436101563",
+      "title": "Verschwörungstheorie-Abend",
+      "description": "jeder stellt eine Verschwörungstheorie vor mit Powerpoint",
+      "category": "short",
+      "duration": "Flexibel",
+      "tags": [
+        "Eigene Idee",
+        "2–3 Stunden",
+        "Persönlich"
+      ],
+      "emoji": "🕵️",
+      "isUserAdded": true
+    },
+    {
+      "id": "custom-eisbade-nachsten-montag-1776436019800",
+      "title": "Eisbade nächsten Montag",
+      "description": "Gehe Eisbaden am Montag um 6:30 am Eisbach",
+      "category": "date",
+      "duration": "Flexibel",
+      "tags": [
+        "Eigene Idee",
+        "Date Night",
+        "Persönlich"
+      ],
+      "emoji": "🧊",
+      "isUserAdded": true
+    },
+    {
+      "id": "custom-clif-jumping-1776435963782",
+      "title": "Clif jumping",
+      "description": "fahre in die Berge und springe von paar Klippen",
+      "category": "date",
+      "duration": "Flexibel",
+      "tags": [
+        "Eigene Idee",
+        "Date Night",
+        "Persönlich"
+      ],
+      "emoji": "🪂",
+      "isUserAdded": true
+    },
+    {
+      "id": "custom-ice-sliding-1776435861865",
+      "title": "Ice sliding",
+      "description": "Gefriere krocks in einem Block Eis und fahre damit einen Hügel runter",
+      "category": "date",
+      "duration": "Flexibel",
+      "tags": [
+        "Eigene Idee",
+        "Date Night",
+        "Persönlich"
+      ],
+      "emoji": "🧊",
+      "isUserAdded": true
+    },
+    {
+      "id": "custom-slip-and-slide-1776435781359",
+      "title": "Slip and Slide",
+      "description": "Baue eine Slip an Slide mit Sprung",
+      "category": "fullday",
+      "duration": "Flexibel",
+      "tags": [
+        "Eigene Idee",
+        "Ganzer Tag",
+        "Persönlich"
+      ],
+      "emoji": "🏄",
+      "isUserAdded": true
+    }
+  ],
+  "editedIdeas": {
+    "date-002": {
+      "emoji": "🌲",
+      "title": "Spazieren im Wald",
+      "description": "Nehmt euch Tee im Becher mit und macht aus einem einfachen Waldweg einen kleinen Rückzug aus allem.",
+      "category": "short",
+      "tags": [
+        "2–3 Stunden",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    },
+    "date-004": {
+      "emoji": "🏄",
+      "title": "Eisbach surfen gehen",
+      "description": "Wenn die Bedingungen passen, wird daraus ein echtes München-Abenteuer; alternativ bleibt der Spot als energiegeladene Session am Wasser.",
+      "category": "fullday",
+      "tags": [
+        "Ganzer Tag",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    },
+    "date-005": {
+      "emoji": "🎾",
+      "title": "Tennis spielen",
+      "description": "Bucht spontan einen Platz oder nehmt Schläger mit in den Park und spielt locker ohne Leistungsdruck.",
+      "category": "short",
+      "tags": [
+        "2–3 Stunden",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    },
+    "date-007": {
+      "emoji": "🍷",
+      "title": "U-Bahn-Wein-Expedition",
+      "description": "Ein Weinglas, eine Flasche und an zufälligen Stationen aussteigen: Jede Haltestelle wird kurz zu eurem Forschungsgebiet.",
+      "category": "fullday",
+      "tags": [
+        "Ganzer Tag",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    },
+    "date-009": {
+      "emoji": "🍾",
+      "title": "Billigwein-Verkostung",
+      "description": "Kauft mehrere günstige Flaschen, versteckt die Etiketten und kürt ganz ernsthaft den absurdesten Sieger.",
+      "category": "fullday",
+      "tags": [
+        "Ganzer Tag",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    },
+    "date-013": {
+      "emoji": "⚽",
+      "title": "Fußballgolf",
+      "description": "Stellt weit entfernt einen Eimer auf und spielt mit möglichst wenigen Schüssen quer durch eure Umgebung.",
+      "category": "fullday",
+      "tags": [
+        "Ganzer Tag",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    },
+    "date-014": {
+      "emoji": "🏡",
+      "title": "Tennis im Garten",
+      "description": "Improvisiert Netz, Linien und Regeln und macht aus dem Garten einen leicht lächerlichen Center Court.",
+      "category": "fullday",
+      "tags": [
+        "Ganzer Tag",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    },
+    "date-015": {
+      "emoji": "📵",
+      "title": "Gartentag ohne Handys",
+      "description": "Alles Digitale bleibt drinnen und ihr verbringt ein paar Stunden nur mit Sonnenlicht, Getränken und echter Langeweile.",
+      "category": "fullday",
+      "tags": [
+        "Ganzer Tag",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    },
+    "date-020": {
+      "emoji": "🚤",
+      "title": "Bootfahren auf dem Starnberger See",
+      "description": "Ein ruhiger Klassiker mit Aussicht, Wasser und genau der richtigen Menge Sommerfilm-Gefühl.",
+      "category": "fullday",
+      "tags": [
+        "Ganzer Tag",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    },
+    "date-021": {
+      "emoji": "🍫",
+      "title": "Schokolade-auspacken-Spiel",
+      "description": "Verpackt Schokolade mehrfach, würfelt um Tempo und lacht über die überraschend intensive Spannung.",
+      "category": "short",
+      "tags": [
+        "2–3 Stunden",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    },
+    "date-022": {
+      "emoji": "🛩️",
+      "title": "Papierflieger-Wettbewerb",
+      "description": "Baut verschiedene Modelle, testet Wurfweiten und führt ein übertrieben professionelles Ranking.",
+      "category": "short",
+      "tags": [
+        "2–3 Stunden",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    },
+    "date-023": {
+      "emoji": "⛳",
+      "title": "Wild Golf",
+      "description": "Sucht euch absurde Hindernisse und spielt eine Runde Minigolf ohne Minigolfplatz.",
+      "category": "fullday",
+      "tags": [
+        "Ganzer Tag",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    },
+    "date-028": {
+      "emoji": "🎤",
+      "title": "Karaoke zu Hause",
+      "description": "Baut ein kleines Bewertungssystem mit Kategorien wie Bühnenpräsenz, Mut und völlig unnötigem Pathos.",
+      "category": "short",
+      "tags": [
+        "2–3 Stunden",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    },
+    "date-032": {
+      "emoji": "🪢",
+      "title": "Hängematte und Lesestunde",
+      "description": "Spannt eine Hängematte auf, nehmt Snacks mit und verschwindet für ein paar Kapitel aus dem Rest des Tages.",
+      "category": "short",
+      "tags": [
+        "2–3 Stunden",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    },
+    "short-001": {
+      "emoji": "🛶",
+      "title": "Schlauchboottour auf der Isar",
+      "description": "Packt nur das Nötigste ein und lasst euch für ein paar Stunden vom Wasser und der Stimmung treiben.",
+      "category": "fullday",
+      "tags": [
+        "Ganzer Tag",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    },
+    "short-009": {
+      "emoji": "💿",
+      "title": "Vinyl-Flohmarkt",
+      "description": "Jede Person sucht der anderen eine Platte aus, die irgendwie überraschend gut passen könnte.",
+      "category": "date",
+      "tags": [
+        "Date Night",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    },
+    "short-016": {
+      "emoji": "🔦",
+      "title": "Nachtwanderung",
+      "description": "Geht nach Einbruch der Dunkelheit los und versucht, Geräusche und Zeichen der Nacht zu sammeln.",
+      "category": "short",
+      "tags": [
+        "2–3 Stunden",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    },
+    "short-017": {
+      "emoji": "🔭",
+      "title": "Sternenhimmel",
+      "description": "Baut ein  Teleskop, legt euch raus und macht aus Beobachten der Sterne ein Date",
+      "category": "date",
+      "tags": [
+        "Date Night",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    },
+    "custom-ice-sliding-1776435861865": {
+      "emoji": "🧊",
+      "title": "Ice sliding",
+      "description": "Gefriere krocks in einem Block Eis und fahre damit einen Hügel runter",
+      "category": "short",
+      "tags": [
+        "2–3 Stunden",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    },
+    "custom-clif-jumping-1776435963782": {
+      "emoji": "🪂",
+      "title": "Clif jumping",
+      "description": "fahre in die Berge und springe von paar Klippen",
+      "category": "fullday",
+      "tags": [
+        "Ganzer Tag",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    },
+    "custom-eisbade-nachsten-montag-1776436019800": {
+      "emoji": "🧊",
+      "title": "Eisbade nächsten Montag",
+      "description": "Gehe Eisbaden am Montag um 6:30 am Eisbach",
+      "category": "short",
+      "tags": [
+        "2–3 Stunden",
+        "Flexibel",
+        "Bearbeitet"
+      ]
+    }
+  },
+  "deletedIdeas": [
+    "date-001",
+    "date-024",
+    "date-026",
+    "date-027",
+    "date-029",
+    "date-030",
+    "date-031",
+    "date-033",
+    "date-034",
+    "date-036",
+    "short-003",
+    "short-004",
+    "short-007",
+    "short-008",
+    "short-011",
+    "short-012",
+    "short-013",
+    "short-014",
+    "short-019",
+    "short-022",
+    "short-023",
+    "short-025",
+    "short-026",
+    "short-028",
+    "short-029",
+    "short-030",
+    "short-031",
+    "short-034",
+    "short-036",
+    "short-037",
+    "fullday-001",
+    "fullday-005",
+    "fullday-006",
+    "fullday-009",
+    "fullday-010",
+    "fullday-011",
+    "fullday-012",
+    "fullday-013",
+    "fullday-015",
+    "fullday-017",
+    "fullday-018",
+    "fullday-020",
+    "fullday-028",
+    "fullday-030",
+    "fullday-031",
+    "fullday-032",
+    "fullday-033",
+    "fullday-035",
+    "fullday-036",
+    "fullday-037"
+  ],
+  "sharedIdeas": [],
+  "sharedImages": []
+}
