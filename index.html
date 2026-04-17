@@ -2157,7 +2157,7 @@
     }
 
     // Authentication Functions
-    const API_BASE = window.location.origin + ':3000/api';
+    const API_BASE = window.location.protocol + '//' + window.location.host + '/api';
     let cachedImages = [];
     let isAuthenticated = false;
 

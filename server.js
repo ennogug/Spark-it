@@ -19,7 +19,7 @@ app.use(express.static('public'));
 
 // Session configuration
 app.use(session({
-  secret: crypto.randomBytes(32).toString('hex'),
+  secret: process.env.SESSION_SECRET || 'spark-it-secret-key-change-in-production',
   resave: false,
   saveUninitialized: false,
   cookie: {
