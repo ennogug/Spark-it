@@ -62,15 +62,21 @@ if (!fs.existsSync(uploadsDir)) {
 // Initialize database
 const db = new sqlite3.Database(dbPath);
 
-// Initialize database schema
-db.serialize(() => {
-  const schema = fs.readFileSync(path.join(__dirname, 'database', 'schema.sql'), 'utf8');
-  schema.split(';').forEach(stmt => {
-    if (stmt.trim()) {
-      db.run(stmt.trim());
-    }
+// Initialize database schema only if database doesn't exist
+if (!fs.existsSync(dbPath)) {
+  console.log('Database not found, creating new database...');
+  db.serialize(() => {
+    const schema = fs.readFileSync(path.join(__dirname, 'database', 'schema.sql'), 'utf8');
+    schema.split(';').forEach(stmt => {
+      if (stmt.trim()) {
+        db.run(stmt.trim());
+      }
+    });
+    console.log('Database initialized successfully');
   });
-});
+} else {
+  console.log('Database already exists, using existing database');
+}
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
