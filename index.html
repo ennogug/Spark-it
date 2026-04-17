@@ -1613,7 +1613,6 @@
             <input type="text" name="title" placeholder="Titel" required>
             <input type="text" name="emoji" placeholder="Emoji" maxlength="4" required>
             <select name="category" required></select>
-            <input type="text" name="duration" placeholder="Dauer" required>
           </div>
           <textarea name="description" placeholder="Beschreibung" maxlength="220" required></textarea>
           <button type="submit">Hinzufügen</button>
@@ -1627,7 +1626,6 @@
                 <th>Titel</th>
                 <th>Beschreibung</th>
                 <th>Kategorie</th>
-                <th>Dauer</th>
                 <th>Quelle</th>
                 <th>Aktionen</th>
               </tr>
@@ -2108,7 +2106,6 @@
             "<td><input data-field=\"title\" data-id=\"" + escapeHtml(idea.id) + "\" value=\"" + escapeHtml(idea.title) + "\" maxlength=\"80\"></td>",
             "<td><textarea data-field=\"description\" data-id=\"" + escapeHtml(idea.id) + "\" maxlength=\"220\">" + escapeHtml(idea.description) + "</textarea></td>",
             "<td><select data-field=\"category\" data-id=\"" + escapeHtml(idea.id) + "\">" + categories.map((category) => '<option value="' + category.id + '"' + (category.id === idea.category ? " selected" : "") + ">" + escapeHtml(category.label) + "</option>").join("") + "</select></td>",
-            "<td><input data-field=\"duration\" data-id=\"" + escapeHtml(idea.id) + "\" value=\"" + escapeHtml(idea.duration) + "\" maxlength=\"24\"></td>",
             "<td>" + escapeHtml(sourceLabel(idea)) + "</td>",
             "<td><div class=\"table-actions\"><button class=\"icon-btn\" type=\"button\" data-save=\"" + escapeHtml(idea.id) + "\">Speichern</button><button class=\"icon-btn\" type=\"button\" data-delete=\"" + escapeHtml(idea.id) + "\">Löschen</button></div></td>",
             "</tr>"
@@ -2227,8 +2224,7 @@
           title: formData.get("title").trim(),
           description: formData.get("description").trim(),
           category: formData.get("category"),
-          emoji: formData.get("emoji").trim(),
-          duration: formData.get("duration").trim()
+          emoji: formData.get("emoji").trim()
         });
         elements.adminAddForm.reset();
         renderAdmin();
