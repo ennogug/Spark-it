@@ -1245,6 +1245,207 @@
         flex-direction: column;
         align-items: flex-start;
       }
+
+      /* Mobile Full-Screen Spark'it Generator Optimization */
+      .main {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        min-height: calc(100vh - 200px);
+      }
+
+      .card-stage {
+        min-height: calc(100vh - 250px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 12px;
+      }
+
+      .idea-card {
+        min-height: calc(100vh - 300px);
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        transform: rotate(0deg);
+        border-radius: 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .card-top {
+        flex-shrink: 0;
+      }
+
+      .card-copy {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        padding: 16px 0;
+      }
+
+      .card-footer {
+        flex-shrink: 0;
+      }
+
+      .side-panel {
+        order: -1;
+        width: 100%;
+      }
+
+      .panel-card {
+        width: 100%;
+        padding: 16px;
+      }
+
+      .action-stack {
+        flex-direction: row;
+        gap: 12px;
+      }
+
+      .action-btn {
+        flex: 1;
+        min-height: 52px;
+        font-size: 16px;
+      }
+
+      /* Mobile Admin Panel Optimization */
+      .admin-panel {
+        max-height: 90vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        width: 95%;
+        margin: 10px auto;
+        border-radius: 18px;
+      }
+
+      .admin-panel header {
+        position: sticky;
+        top: 0;
+        background: var(--surface);
+        z-index: 10;
+        padding: 16px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      #adminContent {
+        padding: 16px;
+        overflow-x: hidden;
+      }
+
+      .admin-topbar {
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .admin-filters {
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+      }
+
+      .admin-filters input,
+      .admin-filters select,
+      .admin-filters button {
+        width: 100%;
+        min-height: 44px;
+        font-size: 16px;
+      }
+
+      .admin-form {
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+
+      .admin-form .admin-filters {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -16px;
+        padding: 0 16px;
+      }
+
+      .admin-table-wrap table {
+        min-width: 600px;
+        font-size: 14px;
+      }
+
+      .admin-table-wrap th,
+      .admin-table-wrap td {
+        padding: 8px 6px;
+        white-space: nowrap;
+      }
+
+      .admin-table-wrap input,
+      .admin-table-wrap textarea,
+      .admin-table-wrap select {
+        font-size: 16px;
+        min-height: 36px;
+      }
+
+      .table-actions {
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .table-actions button {
+        min-height: 32px;
+        font-size: 12px;
+        padding: 6px 10px;
+      }
+
+      /* Hero section mobile optimization */
+      .hero {
+        min-height: auto;
+        padding: 16px;
+      }
+
+      .hero-art img {
+        max-height: 180px;
+      }
+
+      /* Upload section mobile optimization */
+      .upload-section {
+        padding: 16px;
+        margin-top: 20px;
+      }
+
+      .upload-card {
+        transform: rotate(0deg);
+        padding: 16px;
+      }
+
+      /* Category buttons mobile optimization */
+      .category-group {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .category-btn {
+        min-height: 48px;
+        font-size: 16px;
+      }
+
+      /* Control stamp mobile optimization */
+      .control-stamp {
+        font-size: 0.9rem;
+        padding: 10px 16px;
+      }
+
+      /* Prevent horizontal scroll on mobile */
+      body {
+        overflow-x: hidden;
+      }
+
+      /* Improve touch scrolling */
+      .admin-panel,
+      .admin-table-wrap {
+        overscroll-behavior: contain;
+      }
     }
 
     .upload-section {
