@@ -1749,22 +1749,40 @@
 
       // Automatische Synchronisation mit GitHub Pages
       async syncWithGitHub() {
-        if (!this.isOnline || !this.githubRepo) {
+        if (!this.isOnline) {
           return false;
         }
 
         try {
-          // Versuche, Daten von GitHub zu holen
-          const response = await fetch(`${this.githubRepo}/${this.dataFileName}?t=${Date.now()}`);
+          // Methode 1: Versuche Daten von GitHub zu holen
+          const response = await fetch(`${this.dataFileName}?t=${Date.now()}`);
           if (response.ok) {
             const jsonData = await response.text();
-            this.loadDataFromJson(jsonData);
+            if (this.loadDataFromJson(jsonData)) {
+              console.log('Live-Sync: Daten von GitHub geladen');
+              return true;
+            }
           }
         } catch (error) {
-          console.log('Live-Sync: Keine Remote-Daten gefunden');
+          console.log('Live-Sync: GitHub Methode 1 fehlgeschlagen');
         }
 
-        return true;
+        try {
+          // Methode 2: Prüfe localStorage von anderen Geräten
+          const otherDeviceData = localStorage.getItem('spark_other_device_data');
+          if (otherDeviceData) {
+            const data = JSON.parse(otherDeviceData);
+            if (data.timestamp > this.lastSyncTime) {
+              this.loadDataFromJson(JSON.stringify(data));
+              console.log('Live-Sync: Daten von anderem Gerät geladen');
+              return true;
+            }
+          }
+        } catch (error) {
+          console.log('Live-Sync: Geräte-Sync fehlgeschlagen');
+        }
+
+        return false;
       }
 
       // Daten zu GitHub hochladen (simuliert durch localStorage)

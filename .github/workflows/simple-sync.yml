@@ -1,0 +1,64 @@
+name: Simple Live Sync
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run every 5 minutes
+    - cron: '*/5 * * * *'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Read current data
+      id: read_data
+      run: |
+        if [ -f "spark-data.json" ]; then
+          echo "data_exists=true" >> $GITHUB_OUTPUT
+          CURRENT_VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('spark-data.json', 'utf8')).version || 1)")
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+        else
+          echo "data_exists=false" >> $GITHUB_OUTPUT
+          echo "version=1" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Update HTML with data
+      run: |
+        # Simple approach: Use sed to replace data injection
+        if [ "${{ steps.read_data.outputs.data_exists }}" = "true" ]; then
+          # Read current data
+          DATA_CONTENT=$(cat spark-data.json)
+          
+          # Escape JSON for sed
+          ESCAPED_DATA=$(echo "$DATA_CONTENT" | sed 's/[[/\\[/g; s/]]/\\]/g; s/"/\\"/g')
+          
+          # Update HTML
+          sed -i "s|window\.sparkInitialData = {.*};|window.sparkInitialData = $ESCAPED_DATA;|g" index.html
+          
+          echo "HTML updated with data version ${{ steps.read_data.outputs.version }}"
+        else
+          echo "No data file found, skipping HTML update"
+        fi
+
+    - name: Commit and push
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Only commit if HTML changed
+        if git diff --quiet index.html; then
+          git add index.html
+          git commit -m "Update HTML with latest data [skip ci]"
+          git push
+          echo "Changes pushed successfully"
+        else
+          echo "No changes to commit"
+        fi
