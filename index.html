@@ -1047,8 +1047,8 @@
         grid-template-columns: 1fr;
         grid-template-areas:
           "title"
-          "copy"
-          "art";
+          "art"
+          "copy";
       }
 
       h1 {
@@ -1057,6 +1057,12 @@
 
       .hero-copy {
         transform: none;
+      }
+
+      .hero-art {
+        justify-self: center;
+        width: min(60vw, 200px);
+        margin: 10px 0;
       }
 
       .memory-shot {
@@ -1144,6 +1150,88 @@
       /* Ensure proper spacing for touch targets */
       .panel-card {
         padding: 20px;
+      }
+
+      /* Mobile idea-card enhancement - larger and more prominent */
+      .main {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        min-height: auto;
+      }
+
+      .card-stage {
+        min-height: auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 8px;
+      }
+
+      .idea-card {
+        min-height: calc(100vh - 380px);
+        min-height: 520px;
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        transform: rotate(0deg);
+        border-radius: 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: clamp(20px, 5vw, 32px);
+      }
+
+      .card-top {
+        flex-shrink: 0;
+      }
+
+      .card-icon {
+        width: 64px;
+        height: 64px;
+        font-size: 1.8rem;
+      }
+
+      .card-headings h2 {
+        font-size: clamp(1.6rem, 6vw, 2.2rem);
+      }
+
+      .card-copy {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        padding: 20px 0;
+        font-size: clamp(1rem, 3.5vw, 1.15rem);
+        line-height: 1.6;
+      }
+
+      .card-footer {
+        flex-shrink: 0;
+      }
+
+      .card-meta {
+        flex-wrap: wrap;
+        gap: 8px;
+        font-size: 0.75rem;
+      }
+
+      .side-panel {
+        order: -1;
+        width: 100%;
+      }
+
+      .panel-card {
+        width: 100%;
+        padding: 16px;
+      }
+
+      .action-stack {
+        flex-direction: row;
+        gap: 12px;
+      }
+
+      .action-btn {
+        flex: 1;
+        min-height: 52px;
       }
     }
 
