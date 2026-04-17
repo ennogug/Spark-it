@@ -874,31 +874,6 @@
       min-width: 150px;
     }
 
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 18px;
-      height: 18px;
-      padding: 0 5px;
-      font-size: 11px;
-      font-weight: 600;
-      color: white;
-      background: var(--primary);
-      border-radius: 9px;
-      margin-left: 6px;
-      font-family: system-ui, -apple-system, sans-serif;
-    }
-
-    #submitToGitHubButton {
-      position: relative;
-      font-weight: 500;
-    }
-
-    #submitToGitHubButton .badge {
-      background: rgba(122, 30, 51, 0.9);
-    }
-
     #adminContent {
       min-height: 0;
       display: grid;
@@ -1110,14 +1085,6 @@
         grid-template-columns: repeat(3, minmax(0, 1fr));
         grid-template-rows: none;
         padding-top: 0;
-        width: 100%;
-      }
-
-      /* Ziehmaschine-Modul auf Tablet: volle Breite der Spalte */
-      .side-panel .panel-card {
-        width: 100%;
-        max-width: 100%;
-        box-sizing: border-box;
       }
 
     }
@@ -1172,65 +1139,11 @@
 
       .action-stack {
         gap: 12px;
-        width: 100%;
       }
 
       /* Ensure proper spacing for touch targets */
       .panel-card {
         padding: 20px;
-        width: 100%;
-        max-width: 100%;
-        box-sizing: border-box;
-      }
-
-      .panel-card h3 {
-        font-size: 1.2rem;
-        text-align: center;
-        margin-bottom: 16px;
-      }
-
-      /* Ideengeneration Modul auf Mobile - volle Breite */
-      .side-panel .panel-card {
-        width: 100%;
-        max-width: 100%;
-        margin: 0;
-        transform: none;
-      }
-
-      .side-panel .panel-card .action-btn {
-        width: 100%;
-        max-width: 100%;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      /* Mobile: Logo -> Bild -> Text (untereinander) */
-      .hero {
-        grid-template-columns: 1fr;
-        grid-template-areas:
-          "title"
-          "art"
-          "copy";
-        align-items: center;
-        text-align: center;
-        gap: 16px;
-      }
-
-      .hero h1 {
-        justify-self: center;
-      }
-
-      .hero-art {
-        justify-self: center;
-        margin: 0 auto;
-        transform: rotate(4deg) translateY(8px);
-        order: 2;
-      }
-
-      .hero-copy {
-        order: 3;
-        margin: 0 auto;
       }
     }
 
@@ -1314,11 +1227,6 @@
 
       .side-panel {
         grid-template-columns: 1fr;
-        width: 100%;
-        max-width: 100%;
-        padding: 0;
-        margin: 0;
-        gap: 16px;
       }
 
       .panel-card,
@@ -1729,13 +1637,6 @@
             <input type="search" id="adminSearch" placeholder="Suchen nach Titel oder Beschreibung">
             <select id="adminFilter"></select>
             <button class="icon-btn" type="button" id="exportButton">JSON exportieren</button>
-            <button class="icon-btn" type="button" id="exportAllDataButton">Alle Daten exportieren</button>
-            <button class="icon-btn" type="button" id="importDataButton">Daten importieren</button>
-            <input type="file" id="importDataFile" accept=".json" style="display: none;">
-            <button class="icon-btn primary" type="button" id="submitToGitHubButton" style="background: rgba(122, 30, 51, 0.1); border-color: rgba(122, 30, 51, 0.3);">
-              🔄 Änderungen einreichen
-              <span id="pendingChangesBadge" class="badge" style="display: none;">0</span>
-            </button>
           </div>
           <div class="muted" id="adminCount"></div>
         </div>
@@ -1779,459 +1680,8 @@
       adminUnlocked: "spark.adminUnlocked",
       easterEgg: "spark.easterEgg",
       authenticated: "spark.authenticated",
-      sharedImages: "spark.sharedImages",
-      sharedIdeas: "spark.sharedIdeas",
-      lastSync: "spark.lastSync",
-      version: "spark.version"
+      sharedImages: "spark.sharedImages"
     };
-
-    // Automatische Live-Synchronisation - vollständig im HTML implementiert
-    class AutoLiveSync {
-      constructor() {
-        this.syncInterval = 30000; // 30 Sekunden
-        this.isOnline = navigator.onLine;
-        this.currentVersion = parseInt(localStorage.getItem(STORAGE_KEYS.version) || '1');
-        this.lastSyncTime = parseInt(localStorage.getItem(STORAGE_KEYS.lastSync) || '0');
-        this.githubRepo = window.location.hostname.includes('github.io') ? 
-          window.location.pathname.replace(/\/[^\/]*$/, '') : '';
-        this.dataFileName = 'spark-data.json';
-      }
-
-      // Alle Daten als JSON-String für HTML-Speicherung
-      getAllDataAsJson() {
-        const data = {
-          version: this.currentVersion + 1,
-          timestamp: Date.now(),
-          sharedIdeas: getSharedIdeas(),
-          sharedImages: getSharedImages(),
-          customIdeas: getCustomIdeas(),
-          editedIdeas: getEditedIdeas(),
-          deletedIdeas: getDeletedIdeas(),
-          history: getHistory()
-        };
-        return JSON.stringify(data, null, 2);
-      }
-
-      // Daten aus JSON-String laden
-      loadDataFromJson(jsonString) {
-        try {
-          const data = JSON.parse(jsonString);
-          
-          // Nur laden wenn neuer als lokale Version
-          if (data.version > this.currentVersion) {
-            if (data.sharedIdeas) saveSharedIdeas(data.sharedIdeas);
-            if (data.sharedImages) saveSharedImages(data.sharedImages);
-            if (data.customIdeas) writeStorage(STORAGE_KEYS.customIdeas, data.customIdeas);
-            if (data.editedIdeas) writeStorage(STORAGE_KEYS.editedIdeas, data.editedIdeas);
-            if (data.deletedIdeas) writeStorage(STORAGE_KEYS.deletedIdeas, data.deletedIdeas);
-            if (data.history) writeStorage(STORAGE_KEYS.history, data.history);
-            
-            this.currentVersion = data.version;
-            localStorage.setItem(STORAGE_KEYS.version, this.currentVersion.toString());
-            
-            // UI aktualisieren
-            if (typeof renderAdmin === 'function') renderAdmin();
-            if (typeof updateStats === 'function') updateStats();
-            if (typeof renderGallery === 'function') renderGallery();
-            
-            console.log('Live-Sync: Daten aktualisiert auf Version', this.currentVersion);
-            return true;
-          }
-        } catch (error) {
-          console.warn('Live-Sync: Fehler beim Laden der Daten', error);
-        }
-        return false;
-      }
-
-      // Automatische Synchronisation mit GitHub Pages
-      async syncWithGitHub() {
-        if (!this.isOnline) {
-          return false;
-        }
-
-        try {
-          // Methode 1: Versuche Daten von GitHub zu holen
-          const response = await fetch(`${this.dataFileName}?t=${Date.now()}`);
-          if (response.ok) {
-            const jsonData = await response.text();
-            if (this.loadDataFromJson(jsonData)) {
-              console.log('Live-Sync: Daten von GitHub geladen');
-              return true;
-            }
-          }
-        } catch (error) {
-          console.log('Live-Sync: GitHub Methode 1 fehlgeschlagen');
-        }
-
-        try {
-          // Methode 2: Prüfe localStorage von anderen Geräten
-          const otherDeviceData = localStorage.getItem('spark_other_device_data');
-          if (otherDeviceData) {
-            const data = JSON.parse(otherDeviceData);
-            if (data.timestamp > this.lastSyncTime) {
-              this.loadDataFromJson(JSON.stringify(data));
-              console.log('Live-Sync: Daten von anderem Gerät geladen');
-              return true;
-            }
-          }
-        } catch (error) {
-          console.log('Live-Sync: Geräte-Sync fehlgeschlagen');
-        }
-
-        return false;
-      }
-
-      // Daten zu GitHub hochladen (simuliert durch localStorage)
-      saveToGitHub() {
-        // In einer echten Implementierung würde dies GitHub API verwenden
-        // Für GitHub Pages speichern wir die Daten im localStorage
-        const jsonData = this.getAllDataAsJson();
-        
-        // Simuliere GitHub-Speicherung durch localStorage
-        localStorage.setItem('spark_github_backup', jsonData);
-        
-        // Version und Zeitstempel aktualisieren
-        this.currentVersion++;
-        this.lastSyncTime = Date.now();
-        localStorage.setItem(STORAGE_KEYS.version, this.currentVersion.toString());
-        localStorage.setItem(STORAGE_KEYS.lastSync, this.lastSyncTime.toString());
-        
-        console.log('Live-Sync: Daten gespeichert, Version', this.currentVersion);
-        
-        // Automatische Weiterleitung zur GitHub Pages Aktualisierung
-        this.triggerGitHubUpdate();
-      }
-
-      // GitHub Pages Aktualisierung auslösen
-      triggerGitHubUpdate() {
-        // Erstelle einen unsichtbaren Link zum automatischen Update
-        const updateUrl = `${window.location.origin}${this.githubRepo}/update.html?v=${Date.now()}`;
-        
-        // Sende POST-Request an GitHub Pages (simuliert)
-        fetch(updateUrl, { method: 'POST', body: this.getAllDataAsJson() })
-          .catch(() => {
-            // Wenn das fehlschlägt, nutzen wir localStorage als Fallback
-            console.log('Live-Sync: Lokale Speicherung als Fallback');
-          });
-      }
-
-      // Automatische Synchronisation starten
-      startAutoSync() {
-        console.log('Live-Sync: Automatische Synchronisation gestartet');
-        
-        // Sofortige Synchronisation
-        this.syncWithGitHub();
-        
-        // Periodische Synchronisation
-        setInterval(() => {
-          if (this.isOnline) {
-            this.syncWithGitHub();
-          }
-        }, this.syncInterval);
-
-        // Online/Offline-Erkennung
-        window.addEventListener('online', () => {
-          this.isOnline = true;
-          this.syncWithGitHub();
-        });
-        
-        window.addEventListener('offline', () => {
-          this.isOnline = false;
-        });
-
-        // Automatische Speicherung bei Datenänderungen
-        this.setupDataChangeListeners();
-      }
-
-      // Listener für Datenänderungen einrichten
-      setupDataChangeListeners() {
-        // Interzeptiere localStorage-Änderungen
-        const originalSetItem = localStorage.setItem;
-        localStorage.setItem = (key, value) => {
-          originalSetItem.call(localStorage, key, value);
-          
-          // Prüfe ob es sich um relevante Daten handelt
-          const relevantKeys = [
-            STORAGE_KEYS.sharedIdeas,
-            STORAGE_KEYS.sharedImages,
-            STORAGE_KEYS.customIdeas,
-            STORAGE_KEYS.editedIdeas,
-            STORAGE_KEYS.deletedIdeas,
-            STORAGE_KEYS.history
-          ];
-          
-          if (relevantKeys.includes(key)) {
-            // Verzögerte Speicherung um mehrere Änderungen zu bündeln
-            clearTimeout(this.saveTimeout);
-            this.saveTimeout = setTimeout(() => {
-              this.saveToGitHub();
-            }, 1000);
-          }
-        };
-      }
-
-      // Manuelle Synchronisation auslösen
-      forceSync() {
-        this.saveToGitHub();
-        setTimeout(() => this.syncWithGitHub(), 1000);
-      }
-
-      // Sync-Status anzeigen
-      getSyncStatus() {
-        return {
-          isOnline: this.isOnline,
-          currentVersion: this.currentVersion,
-          lastSync: new Date(this.lastSyncTime).toLocaleString(),
-          syncInterval: this.syncInterval / 1000 + 's'
-        };
-      }
-    }
-
-    // GitHub Actions Submission Manager - Speichert Änderungen für GitHub Actions
-    class SubmissionManager {
-      constructor() {
-        this.STORAGE_KEY = 'spark_pending_submissions';
-        this.SUBMISSION_VERSION = 1;
-        this.maxImages = 10;
-        this.maxImageSize = 5 * 1024 * 1024; // 5MB
-      }
-
-      // Sammelt alle ausstehenden Änderungen
-      collectPendingChanges() {
-        const customIdeas = getCustomIdeas();
-        const editedIdeas = getEditedIdeas();
-        const deletedIdeas = getDeletedIdeas();
-        const sharedImages = getSharedImages();
-        
-        // Filtere nur Ideen, die seit dem letzten Commit hinzugefügt wurden
-        const lastSubmission = this.getLastSubmission();
-        const lastSubmissionTime = lastSubmission ? lastSubmission.timestamp : 0;
-        
-        const newIdeas = customIdeas.filter(idea => {
-          const ideaTime = new Date(idea.addedAt || 0).getTime();
-          return ideaTime > lastSubmissionTime;
-        });
-        
-        const newImages = sharedImages.filter(img => {
-          const imgTime = new Date(img.uploadedAt || 0).getTime();
-          return imgTime > lastSubmissionTime;
-        });
-
-        return {
-          newIdeas,
-          editedIdeas,
-          deletedIdeas,
-          newImages
-        };
-      }
-
-      // Prüft, ob es ausstehende Änderungen gibt
-      hasPendingChanges() {
-        const changes = this.collectPendingChanges();
-        return changes.newIdeas.length > 0 || 
-               Object.keys(changes.editedIdeas).length > 0 || 
-               changes.deletedIdeas.length > 0 ||
-               changes.newImages.length > 0;
-      }
-
-      // Anzahl der ausstehenden Änderungen
-      getPendingCount() {
-        const changes = this.collectPendingChanges();
-        return changes.newIdeas.length + 
-               Object.keys(changes.editedIdeas).length + 
-               changes.deletedIdeas.length +
-               changes.newImages.length;
-      }
-
-      // Erstellt Submission-Paket
-      createSubmission() {
-        const changes = this.collectPendingChanges();
-        
-        if (!this.hasPendingChanges()) {
-          return null;
-        }
-
-        // Validiere Bilder
-        const validatedImages = changes.newImages.filter(img => {
-          if (!img.data || img.data.length > this.maxImageSize) {
-            console.warn('Submission: Bild zu groß oder ungültig', img.filename);
-            return false;
-          }
-          return true;
-        }).slice(0, this.maxImages); // Max 10 Bilder pro Submission
-
-        const submission = {
-          version: this.SUBMISSION_VERSION,
-          timestamp: Date.now(),
-          submittedAt: new Date().toISOString(),
-          submittedBy: this.generateUserId(),
-          browserInfo: navigator.userAgent,
-          changes: {
-            newIdeas: changes.newIdeas,
-            editedIdeas: changes.editedIdeas,
-            deletedIdeas: changes.deletedIdeas,
-            newImages: validatedImages
-          }
-        };
-
-        return submission;
-      }
-
-      // Generiert eindeutige Nutzer-ID
-      generateUserId() {
-        let userId = localStorage.getItem('spark_user_id');
-        if (!userId) {
-          userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-          localStorage.setItem('spark_user_id', userId);
-        }
-        return userId;
-      }
-
-      // Speichert Submission im localStorage
-      saveSubmission(submission) {
-        const submissions = this.getAllSubmissions();
-        submissions.push(submission);
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(submissions));
-        
-        // Speichere Zeitstempel der letzten Submission
-        localStorage.setItem('spark_last_submission_time', submission.timestamp.toString());
-        
-        return submission;
-      }
-
-      // Holt alle gespeicherten Submissions
-      getAllSubmissions() {
-        try {
-          return JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '[]');
-        } catch {
-          return [];
-        }
-      }
-
-      // Holt letzte Submission
-      getLastSubmission() {
-        const submissions = this.getAllSubmissions();
-        return submissions.length > 0 ? submissions[submissions.length - 1] : null;
-      }
-
-      // Exportiert Submission als Download (für manuelles Hochladen)
-      exportSubmission() {
-        const submission = this.createSubmission();
-        if (!submission) {
-          alert('Keine ausstehenden Änderungen zum Exportieren.');
-          return null;
-        }
-
-        const dataStr = JSON.stringify(submission, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(dataBlob);
-        link.download = `spark-submission-${Date.now()}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // Speichere diese Submission
-        this.saveSubmission(submission);
-        
-        return submission;
-      }
-
-      // Automatische Submission an GitHub Actions (simuliert)
-      async submitToGitHub() {
-        const submission = this.createSubmission();
-        if (!submission) {
-          return { success: false, message: 'Keine ausstehenden Änderungen' };
-        }
-
-        try {
-          // Versuche Repository Dispatch Event
-          // Hinweis: Erfordert GitHub Personal Access Token
-          const githubToken = localStorage.getItem('spark_github_token');
-          
-          if (!githubToken) {
-            // Fallback: Export als Datei
-            this.exportSubmission();
-            return { 
-              success: true, 
-              method: 'export',
-              message: 'Änderungen als Datei exportiert. Bitte im Repository hochladen.' 
-            };
-          }
-
-          // Echte GitHub API Anfrage
-          const response = await fetch('https://api.github.com/repos/YOUR_USERNAME/YOUR_REPO/dispatches', {
-            method: 'POST',
-            headers: {
-              'Authorization': `token ${githubToken}`,
-              'Accept': 'application/vnd.github.v3+json',
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              event_type: 'user-submission',
-              client_payload: submission
-            })
-          });
-
-          if (response.ok) {
-            this.saveSubmission(submission);
-            return { 
-              success: true, 
-              method: 'github',
-              message: 'Änderungen erfolgreich an GitHub gesendet!' 
-            };
-          } else {
-            throw new Error(`GitHub API Fehler: ${response.status}`);
-          }
-          
-        } catch (error) {
-          console.error('Submission Fehler:', error);
-          // Fallback: Export als Datei
-          this.exportSubmission();
-          return { 
-            success: true, 
-            method: 'export',
-            message: 'Automatische Übertragung fehlgeschlagen. Datei wurde exportiert.' 
-          };
-        }
-      }
-
-      // Löscht alle Submissions
-      clearSubmissions() {
-        localStorage.removeItem(this.STORAGE_KEY);
-        localStorage.removeItem('spark_last_submission_time');
-      }
-
-      // Zeigt Status-Informationen
-      getStatus() {
-        return {
-          pendingCount: this.getPendingCount(),
-          hasPendingChanges: this.hasPendingChanges(),
-          totalSubmissions: this.getAllSubmissions().length,
-          lastSubmission: this.getLastSubmission()
-        };
-      }
-    }
-
-    // Submission Manager initialisieren
-    const submissionManager = new SubmissionManager();
-
-    // Live-Synchronisation initialisieren
-    const liveSync = new AutoLiveSync();
-
-    // Badge-Aktualisierungsfunktion
-    function updatePendingChangesBadge() {
-      if (!elements.pendingChangesBadge) return;
-      
-      const count = submissionManager.getPendingCount();
-      if (count > 0) {
-        elements.pendingChangesBadge.textContent = count;
-        elements.pendingChangesBadge.style.display = 'inline-flex';
-      } else {
-        elements.pendingChangesBadge.style.display = 'none';
-      }
-    }
 
     // Password protection
     const CORRECT_PASSWORD = "20Vinc08:)";
@@ -2288,55 +1738,67 @@
     }
 
     const originalIdeas = [
-      // User's edited ideas with correct emojis
-      makeIdea("date-002", "Spazieren im Wald", "Nehmt euch Tee im Becher mit und macht aus einem einfachen Waldweg einen kleinen Rückzug aus allem.", "short", "Flexibel", ["2-3 Stunden", "Flexibel", "Bearbeitet"], "🌲"),
-      makeIdea("date-004", "Eisbach surfen gehen", "Wenn die Bedingungen passen, wird daraus ein echtes München-Abenteuer; alternativ bleibt der Spot als energiegeladene Session am Wasser.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "🏄"),
-      makeIdea("date-005", "Tennis spielen", "Bucht spontan einen Platz oder nehmt Schläger mit in den Park und spielt locker ohne Leistungsdruck.", "short", "Flexibel", ["2-3 Stunden", "Flexibel", "Bearbeitet"], "🎾"),
-      makeIdea("date-007", "U-Bahn-Wein-Expedition", "Ein Weinglas, eine Flasche und an zufälligen Stationen aussteigen: Jede Haltestelle wird kurz zu eurem Forschungsgebiet.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "🍷"),
-      makeIdea("date-009", "Billigwein-Verkostung", "Kauft mehrere günstige Flaschen, versteckt die Etiketten und kürt ganz ernsthaft den absurdesten Sieger.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "🍾"),
-      makeIdea("date-013", "Fußballgolf", "Stellt weit entfernt einen Eimer auf und spielt mit möglichst wenigen Schüssen quer durch eure Umgebung.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "⚽"),
-      makeIdea("date-014", "Tennis im Garten", "Improvisiert Netz, Linien und Regeln und macht aus dem Garten einen leicht lächerlichen Center Court.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "🏡"),
-      makeIdea("date-015", "Gartentag ohne Handys", "Alles Digitale bleibt drinnen und ihr verbringt ein paar Stunden nur mit Sonnenlicht, Getränken und echter Langeweile.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "📵"),
-      makeIdea("date-020", "Bootfahren auf dem Starnberger See", "Ein ruhiger Klassiker mit Aussicht, Wasser und genau der richtigen Menge Sommerfilm-Gefühl.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "🚤"),
-      makeIdea("date-021", "Schokolade-auspacken-Spiel", "Verpackt Schokolade mehrfach, würfelt um Tempo und lacht über die überraschend intensive Spannung.", "short", "Flexibel", ["2-3 Stunden", "Flexibel", "Bearbeitet"], "🍫"),
-      makeIdea("date-022", "Papierflieger-Wettbewerb", "Baut verschiedene Modelle, testet Wurfweiten und führt ein übertrieben professionelles Ranking.", "short", "Flexibel", ["2-3 Stunden", "Flexibel", "Bearbeitet"], "🛩️"),
-      makeIdea("date-023", "Wild Golf", "Sucht euch absurde Hindernisse und spielt eine Runde Minigolf ohne Minigolfplatz.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "⛳"),
-      makeIdea("date-028", "Karaoke zu Hause", "Baut ein kleines Bewertungssystem mit Kategorien wie Bühnenpräsenz, Mut und völlig unnötigem Pathos.", "short", "Flexibel", ["2-3 Stunden", "Flexibel", "Bearbeitet"], "🎤"),
-      makeIdea("date-032", "Hängematte und Lesestunde", "Spannt eine Hängematte auf, nehmt Snacks mit und verschwindet für ein paar Kapitel aus dem Rest des Tages.", "short", "Flexibel", ["2-3 Stunden", "Flexibel", "Bearbeitet"], "🪢"),
-      makeIdea("short-001", "Schlauchboottour auf der Isar", "Packt nur das Nötigste ein und lasst euch für ein paar Stunden vom Wasser und der Stimmung treiben.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "🛶"),
-      makeIdea("short-009", "Vinyl-Flohmarkt", "Jede Person sucht der anderen eine Platte aus, die irgendwie überraschend gut passen könnte.", "date", "Flexibel", ["Date Night", "Flexibel", "Bearbeitet"], "💿"),
-      makeIdea("short-016", "Nachtwanderung", "Geht nach Einbruch der Dunkelheit los und versucht, Geräusche und Zeichen der Nacht zu sammeln.", "short", "Flexibel", ["2-3 Stunden", "Flexibel", "Bearbeitet"], "🔦"),
-      makeIdea("short-017", "Sternenhimmel", "Baut ein Teleskop, legt euch raus und macht aus Beobachten der Sterne ein Date", "date", "Flexibel", ["Date Night", "Flexibel", "Bearbeitet"], "🔭"),
-      
-      // Original ideas that weren't deleted
+      makeIdea("date-001", "Spazieren in der Stadt", "Zieht ohne Plan los, biegt immer dort ab, wo es interessanter aussieht, und entdeckt eure eigene Lieblingsroute neu.", "date", "Abend", ["Stadt", "Spontan", "Klassiker"], "🚶"),
+      makeIdea("date-002", "Spazieren im Wald", "Nehmt euch Tee im Becher mit und macht aus einem einfachen Waldweg einen kleinen Rückzug aus allem.", "date", "Abend", ["Natur", "Ruhe", "Draußen"], "🌲"),
       makeIdea("date-003", "Pool spielen gehen", "Ein paar Runden Billard, leichte Konkurrenz und danach noch ein Drink oder Snack zum Nachbesprechen.", "date", "Abend", ["Spiel", "Indoor", "Duell"], "🎱"),
+      makeIdea("date-004", "Eisbach surfen gehen", "Wenn die Bedingungen passen, wird daraus ein echtes München-Abenteuer; alternativ bleibt der Spot als energiegeladene Session am Wasser.", "date", "Abend", ["München", "Wasser", "Bewegung"], "🏄"),
+      makeIdea("date-005", "Tennis spielen", "Bucht spontan einen Platz oder nehmt Schläger mit in den Park und spielt locker ohne Leistungsdruck.", "date", "2-3 Std", ["Sport", "Duell", "Aktiv"], "🎾"),
       makeIdea("date-006", "Brettspiele spielen", "Sucht euch ein Spiel, das ein bisschen Chaos erlaubt, und macht den Abend zur Mini-Meisterschaft.", "date", "Abend", ["Indoor", "Spiel", "Gemütlich"], "🎲"),
+      makeIdea("date-007", "U-Bahn-Wein-Expedition", "Ein Weinglas, eine Flasche und an zufälligen Stationen aussteigen: Jede Haltestelle wird kurz zu eurem Forschungsgebiet.", "date", "Abend", ["Stadt", "Experiment", "München"], "🍷"),
       makeIdea("date-008", "Gemeinsam malen", "Sucht euch ein Thema, legt Musik auf und malt ohne Anspruch, nur auf Stimmung und Spaß.", "date", "Abend", ["Kreativ", "Ruhig", "Farben"], "🎨"),
+      makeIdea("date-009", "Billigwein-Verkostung", "Kauft mehrere günstige Flaschen, versteckt die Etiketten und kürt ganz ernsthaft den absurdesten Sieger.", "date", "Abend", ["Verkostung", "Humor", "Drinnen"], "🍾"),
       makeIdea("date-010", "Fotobuch-Abend", "Blättert alte Fotos durch, erzählt euch die vergessenen Geschichten dazu und ergänzt neue Randnotizen.", "date", "Abend", ["Erinnerungen", "Ruhig", "Persönlich"], "📚"),
       makeIdea("date-011", "Strava-Kunst malen", "Plant eine Lauf- oder Gehstrecke so, dass am Ende auf der Karte ein Motiv entsteht und haltet das Ergebnis fest.", "date", "2-3 Std", ["Kreativ", "Sport", "Digital"], "🗺️"),
       makeIdea("date-012", "Barhopping zu zweit", "Setzt euch pro Bar eine kleine Aufgabe und macht aus dem Abend eine charmant-chaotische Mini-Tour.", "date", "Abend", ["Nacht", "Stadt", "Bar"], "🍸"),
+      makeIdea("date-013", "Fußballgolf-Feldzug", "Stellt weit entfernt einen Eimer auf und spielt mit möglichst wenigen Schüssen quer durch eure Umgebung.", "date", "2-3 Std", ["Sport", "DIY", "Outdoor"], "⚽"),
+      makeIdea("date-014", "Tennis im Garten", "Improvisiert Netz, Linien und Regeln und macht aus dem Garten einen leicht lächerlichen Center Court.", "date", "2-3 Std", ["Garten", "DIY", "Sport"], "🏡"),
+      makeIdea("date-015", "Gartentag ohne Handys", "Alles Digitale bleibt drinnen und ihr verbringt ein paar Stunden nur mit Sonnenlicht, Getränken und echter Langeweile.", "date", "Abend", ["Digital Detox", "Garten", "Ruhig"], "📵"),
       makeIdea("date-016", "Planetarium", "Taucht gemeinsam in Sternbilder, Dunkelheit und diesen seltsam schönen Raum-Zeit-Modus ein.", "date", "Abend", ["Kultur", "Indoor", "Kosmos"], "🪐"),
       makeIdea("date-017", "Gegenseitig zeichnen", "Stellt einen Timer, zeichnet schnell mehrere Versionen und kürt am Ende die frechste Ähnlichkeit.", "date", "Abend", ["Kreativ", "Portrait", "Humor"], "✏️"),
       makeIdea("date-018", "Pixel Arena", "Geht in die Pixel Arena und spielt euch gemeinsam durch Licht, Reaktion und leicht absurden Ehrgeiz.", "date", "2-3 Std", ["Action", "Indoor", "Games"], "🕹️"),
       makeIdea("date-019", "Wohnzimmer-Pool mit Murmeln", "Baut aus Büchern, Murmeln und Stäbchen euren eigenen Billardtisch und nehmt die Regeln völlig ernst.", "date", "2-3 Std", ["DIY", "Spiel", "Chaos"], "📘"),
+      makeIdea("date-020", "Bootfahren auf dem Starnberger See", "Ein ruhiger Klassiker mit Aussicht, Wasser und genau der richtigen Menge Sommerfilm-Gefühl.", "date", "Abend", ["Wasser", "Ausflug", "Romantisch"], "🚤"),
+      makeIdea("date-021", "Schokolade-auspacken-Spiel", "Verpackt Schokolade mehrfach, würfelt um Tempo und lacht über die überraschend intensive Spannung.", "date", "2-3 Std", ["Spiel", "Süß", "Party"], "🍫"),
+      makeIdea("date-022", "Papierflieger-Wettbewerb", "Baut verschiedene Modelle, testet Wurfweiten und führt ein übertrieben professionelles Ranking.", "date", "2-3 Std", ["DIY", "Wettkampf", "Leicht"], "🛩️"),
+      makeIdea("date-023", "Wild Golf", "Sucht euch absurde Hindernisse und spielt eine Runde Minigolf ohne Minigolfplatz.", "date", "2-3 Std", ["DIY", "Draußen", "Spiel"], "⛳"),
+      makeIdea("date-024", "Blindverkostung Eigenmarke vs. Marke", "Organisiert einen kleinen Test mit Chips, Schokolade oder Limo und findet heraus, ob Teuer wirklich gewinnt.", "date", "Abend", ["Verkostung", "Experiment", "Food"], "🥫"),
       makeIdea("date-025", "Eigene Cocktails erfinden", "Nehmt ein paar Zutaten, gebt euren Kreationen Namen und bewertet ehrlich nach Geschmack und Stil.", "date", "Abend", ["Mixen", "Kreativ", "Bar"], "🍹"),
+      makeIdea("date-026", "Blind-Date mit einem Film", "Eine Person wählt den Film komplett geheim, die andere darf erst beim Start erfahren, worauf sie sich einlässt.", "date", "Abend", ["Film", "Überraschung", "Indoor"], "🎬"),
       makeIdea("date-027", "Postkarten an euch in 10 Jahren", "Schreibt euch Zukunftspost, steckt alles in Umschläge und versteckt sie an einem sicheren Ort.", "date", "Abend", ["Persönlich", "Schreiben", "Ritual"], "💌"),
+      makeIdea("date-028", "Karaoke zu Hause", "Baut ein kleines Bewertungssystem mit Kategorien wie Bühnenpräsenz, Mut und völlig unnötigem Pathos.", "date", "Abend", ["Musik", "Lustig", "Wohnung"], "🎤"),
       makeIdea("date-029", "Sushi per YouTube lernen", "Besorgt die Basics, rollt euch durch ein Tutorial und esst am Ende die krummen Meisterwerke.", "date", "Abend", ["Kochen", "Lernen", "Food"], "🍣"),
       makeIdea("date-030", "Brieffreund für einen Tag", "Hinterlasst euch über den Abend verteilt handgeschriebene Mini-Nachrichten in Jacken, Büchern oder Tassen.", "date", "Abend", ["Schreiben", "Überraschung", "Leise"], "✉️"),
       makeIdea("date-031", "Buchseiten-Roulette", "Schlagt zufällig Seiten auf, lest laut vor und baut spontan Gespräche aus fremden Sätzen.", "date", "Abend", ["Bücher", "Ruhig", "Sprache"], "📖"),
+      makeIdea("date-032", "Hängematte und Lesestunde", "Spannt eine Hängematte auf, nehmt Snacks mit und verschwindet für ein paar Kapitel aus dem Rest des Tages.", "date", "Abend", ["Entspannt", "Natur", "Lesen"], "🪢"),
       makeIdea("date-033", "Super8- und VHS-Abend", "Schaut alte Familienaufnahmen und kommentiert gemeinsam Frisuren, Räume und vergangene Versionen des Lebens.", "date", "Abend", ["Erinnerungen", "Familie", "Nostalgie"], "📼"),
       makeIdea("date-034", "Sonnenuntergang fotografieren", "Sucht euch einen erhöhten Punkt, wartet auf das beste Licht und macht aus dem Abend einen kleinen Fotospaziergang.", "date", "Abend", ["Foto", "Aussicht", "Goldene Stunde"], "🌇"),
       makeIdea("date-035", "Selbst erfundene Stadtführung", "Jede Person erfindet unterwegs spontan historische oder völlig falsche Fakten und führt die andere durch die Stadt.", "date", "2-3 Std", ["Stadt", "Impro", "Humor"], "🗺️"),
       makeIdea("date-036", "Architektur-Challenge", "Sucht beim Spazieren gezielt Bauhaus, Historismus und alles dazwischen und diskutiert eure Lieblingsfassaden.", "date", "2-3 Std", ["Architektur", "Stadt", "Beobachten"], "🏛️"),
       makeIdea("date-037", "Origami-Battle", "Wählt drei Figuren, stellt einen Timer und entscheidet am Ende zwischen Eleganz und Katastrophe.", "date", "2-3 Std", ["Papier", "Kreativ", "Wettkampf"], "🦢"),
+
+      makeIdea("short-001", "Schlauchboottour auf der Isar", "Packt nur das Nötigste ein und lasst euch für ein paar Stunden vom Wasser und der Stimmung treiben.", "short", "2-3 Std", ["Wasser", "Sommer", "Abenteuer"], "🛶"),
       makeIdea("short-002", "Münchner Flohmärkte mit 10-Euro-Challenge", "Jede Person hat 10 Euro Budget, um dem anderen etwas Seltsames, Schönes oder Perfektes zu finden.", "short", "2-3 Std", ["Flohmarkt", "Budget", "Stadt"], "🧺"),
+      makeIdea("short-003", "Geocaching in München", "Sucht versteckte Punkte, lauft Umwege und seht die Stadt plötzlich als Schatzkarte.", "short", "2-3 Std", ["München", "Rätsel", "Outdoor"], "🧭"),
+      makeIdea("short-004", "Polaroid-Rallye Altstadt", "Definiert eine kleine Liste an Motiven und jagt mit Kamera oder Handy durch die Altstadt.", "short", "2-3 Std", ["Foto", "Rallye", "Stadt"], "📸"),
       makeIdea("short-005", "Restaurant-Dart auf München-Karte", "Werft blind einen Pfeil oder Marker und esst dort, wo das Schicksal heute Abend hinzeigt.", "short", "2-3 Std", ["Food", "Zufall", "Stadt"], "🎯"),
       makeIdea("short-006", "Kochduell mit gleichen Zutaten", "Beide bekommen dieselben Basics und müssen daraus in kurzer Zeit etwas Eigenes bauen.", "short", "2-3 Std", ["Kochen", "Wettkampf", "Küche"], "🍳"),
+      makeIdea("short-007", "Kurzfilm in einer Stunde", "Legt Genre, Requisite und Twist fest und dreht dann sofort los, bevor irgendwer zu viel nachdenkt.", "short", "2-3 Std", ["Film", "Kreativ", "DIY"], "🎥"),
+      makeIdea("short-008", "Frisbee im Englischen Garten", "Nehmt eine Decke mit, spielt mehrere Runden und bleibt danach einfach noch für Snacks liegen.", "short", "2-3 Std", ["Park", "Sport", "Sommer"], "🥏"),
+      makeIdea("short-009", "Vinyl-Flohmarkt", "Jede Person sucht der anderen eine Platte aus, die irgendwie überraschend gut passen könnte.", "short", "2-3 Std", ["Musik", "Flohmarkt", "Suche"], "💿"),
       makeIdea("short-010", "Outfit-Blind-Einkauf", "Stellt euch mit kleinem Budget gegenseitig ein Outfit zusammen und präsentiert es wie einen Laufsteg-Fail oder Volltreffer.", "short", "2-3 Std", ["Mode", "Challenge", "Budget"], "🧥"),
+      makeIdea("short-011", "Museum für 1 Euro", "Nutzt einen günstigen Abend oder freien Eintritt und behandelt das Museum wie eine kuriose Schatzkammer.", "short", "2-3 Std", ["Museum", "Kultur", "Stadt"], "🖼️"),
+      makeIdea("short-012", "Menschenkicker oder Tischkicker", "Ein kleines Turnier mit sehr ernsten Regeln und sehr unernsten Kommentaren.", "short", "2-3 Std", ["Spiel", "Wettkampf", "Indoor"], "⚽"),
+      makeIdea("short-013", "Stadtmöbel-Tour", "Setzt euch eine Stunde lang alle fünf Minuten woanders hin und beobachtet, wie sich jeder Ort anders anfühlt.", "short", "2-3 Std", ["Stadt", "Beobachten", "Challenge"], "🪑"),
+      makeIdea("short-014", "Bierdosen-Regatta", "Bastelt kleine Boote aus Dosen oder Restmaterial und veranstaltet ein völlig unnötig episches Rennen.", "short", "2-3 Std", ["DIY", "Wasser", "Basteln"], "⛵"),
       makeIdea("short-015", "GarageBand-Beat bauen", "Produziert in kurzer Zeit einen kleinen Beat und gebt ihm einen legendär übertriebenen Titel.", "short", "2-3 Std", ["Musik", "Digital", "Kreativ"], "🎛️"),
+      makeIdea("short-016", "Taschenlampen-Waldgeräusche-Bingo", "Geht nach Einbruch der Dunkelheit los und versucht, Geräusche und Zeichen der Nacht zu sammeln.", "short", "2-3 Std", ["Nacht", "Natur", "Bingo"], "🔦"),
+      makeIdea("short-017", "Sternenhimmel mit Karton-Teleskop", "Baut ein symbolisches Teleskop, legt euch raus und macht aus Beobachten ein kleines Ritual.", "short", "2-3 Std", ["Sterne", "DIY", "Ruhig"], "🔭"),
       makeIdea("short-018", "Boulderzentrum", "Ein sportlicher Block Zeit, bei dem man schnell merkt, welche Routen Theorie und welche Realität sind.", "short", "2-3 Std", ["Sport", "Indoor", "Mut"], "🧗"),
+      makeIdea("short-019", "Escape Room selbst bauen", "Erstellt in der Wohnung oder im Garten kleine Rätsel und versucht, den anderen fair hereinzulegen.", "short", "2-3 Std", ["Rätsel", "DIY", "Spiel"], "🗝️"),
       makeIdea("short-020", "Tagesreise zu einem Ort mit M", "Sucht euch spontan einen Ort mit M im Namen in erreichbarer Nähe und fahrt einfach los.", "short", "2-3 Std", ["Zufall", "Ausflug", "Buchstabe"], "🚌"),
       makeIdea("short-021", "Schach im Café", "Sucht ein ruhiges Café, spielt mehrere schnelle Partien und kommentiert sie übertrieben professionell.", "short", "2-3 Std", ["Café", "Spiel", "Ruhig"], "♟️"),
+      makeIdea("short-022", "Secondhand-Buchtausch", "Jede Person sucht im Laden oder Regal ein Buch für die andere, nur nach Cover und Gefühl.", "short", "2-3 Std", ["Bücher", "Secondhand", "Stadt"], "📚"),
+      makeIdea("short-023", "Kleine Fotojagd nach Farben", "Wählt eine Palette aus drei Farben und sucht nur Motive, die genau dazu passen.", "short", "2-3 Std", ["Foto", "Challenge", "Farben"], "🎞️"),
       makeIdea("short-024", "Café-Hopping mit Punktesystem", "Drei Stopps, drei Getränke, drei Bewertungen: Atmosphäre, Geschmack und Menschenbeobachtungsfaktor.", "short", "2-3 Std", ["Café", "Stadt", "Test"], "☕"),
       makeIdea("short-025", "Street-Art-Safari", "Lauft gezielt durch Viertel, in denen Wände, Sticker und kleine Details zu einer offenen Galerie werden.", "short", "2-3 Std", ["Stadt", "Kunst", "Walking"], "🖌️"),
       makeIdea("short-026", "Bookstore-Dating", "Trefft euch in einer Buchhandlung, verschwindet kurz in verschiedene Ecken und bringt euch dann gegenseitig Fundstücke mit.", "short", "2-3 Std", ["Bücher", "Leicht", "Date"], "🏬"),
@@ -2352,14 +1814,27 @@
       makeIdea("short-036", "Record-Store Listening Session", "Hört in fremde Musik rein und versucht gegenseitig einen Song zu finden, der exakt zum anderen passt.", "short", "2-3 Std", ["Musik", "Entdecken", "Stadt"], "🎧"),
       makeIdea("short-037", "Mini-Zine zusammenfalten", "Schreibt und zeichnet acht kleine Felder voll und faltet daraus euer eigenes absurdes Heft.", "short", "2-3 Std", ["Papier", "Design", "DIY"], "🗞️"),
       makeIdea("short-038", "Bahnfahren ohne Ziel", "Steigt in eine Linie, bleibt sitzen bis euch ein Ort neugierig macht, und steigt dort einfach aus.", "short", "2-3 Std", ["ÖPNV", "Spontan", "Stadt"], "🚇"),
+
+      makeIdea("fullday-001", "Tagesausflug nach Salzburg", "Früh los, viel laufen, zwischendrin Kaffee und am Abend mit einer ganzen Reihe kleiner Bilder zurückkommen.", "fullday", "Ganzer Tag", ["Zug", "Reise", "Altstadt"], "🚆"),
       makeIdea("fullday-002", "Nachts mit dem Fahrrad durch leeres München", "Plant eine Route mit Aussichtspunkten und Snack-Stopps und erlebt die Stadt in einem ganz anderen Takt.", "fullday", "Ganzer Tag", ["München", "Fahrrad", "Nacht"], "🚲"),
       makeIdea("fullday-003", "Strandbad Starnberg bis zum Sonnenuntergang", "Schwimmen, lesen, nichts tun und erst gehen, wenn das Licht wirklich kippt.", "fullday", "Ganzer Tag", ["See", "Sommer", "Entspannt"], "🏖️"),
       makeIdea("fullday-004", "Große Flohmarkt-Tour", "Kombiniert mehrere Märkte, Frühstück unterwegs und eine Challenge, nur mit kuriosen Funden zurückzukommen.", "fullday", "Ganzer Tag", ["Flohmarkt", "Stadt", "Sammeln"], "🛍️"),
+      makeIdea("fullday-005", "München per Brücken erkunden", "Lauft oder radelt eine selbstgebaute Route nur entlang von Brücken, Ufern und Übergängen.", "fullday", "Ganzer Tag", ["Route", "Stadt", "Wasser"], "🌉"),
+      makeIdea("fullday-006", "Polaroid-Tag am ganzen Fluss", "Definiert zehn Motive und dokumentiert einen Tag, der am Ende wie ein eigenes kleines Heft wirkt.", "fullday", "Ganzer Tag", ["Foto", "Dokumentation", "Sommer"], "📷"),
       makeIdea("fullday-007", "Zugfahrt ins Ungeplante", "Nehmt eine Regionalbahn, steigt irgendwo aus, wo ihr noch nie wart, und baut den Tag von dort aus neu auf.", "fullday", "Ganzer Tag", ["Zug", "Spontan", "Ausflug"], "🚉"),
       makeIdea("fullday-008", "Seen-Hopping", "Verbindet zwei oder drei Seen an einem Tag und sammelt pro Ort einen kurzen Moment oder ein kleines Foto.", "fullday", "Ganzer Tag", ["Wasser", "Sommer", "Roadtrip"], "🌊"),
+      makeIdea("fullday-009", "Vintage-Kino und lange Wege", "Plant den Tag so, dass er mit einer Vorführung endet und davor aus Cafés, Straßen und Gesprächen besteht.", "fullday", "Ganzer Tag", ["Film", "Stadt", "Atmosphäre"], "🎞️"),
+      makeIdea("fullday-010", "Münchner Höfe entdecken", "Sucht Innenhöfe, Durchgänge, versteckte Treppen und macht aus der Stadt eine Reihe geheimer Kulissen.", "fullday", "Ganzer Tag", ["Architektur", "Stadt", "Entdecken"], "🏙️"),
+      makeIdea("fullday-011", "Picknick-zu-Picknick-Tag", "Jede Station bekommt einen eigenen Snack und einen anderen Vibe: Park, Ufer, Treppe, Aussicht.", "fullday", "Ganzer Tag", ["Picknick", "Sommer", "Route"], "🍇"),
+      makeIdea("fullday-012", "Fahrrad und Fotoheft", "Macht aus dem Tag ein Motivprojekt mit klarer Bildidee, zum Beispiel Türen, Himmel oder Spiegelungen.", "fullday", "Ganzer Tag", ["Fahrrad", "Foto", "Projekt"], "📔"),
+      makeIdea("fullday-013", "DIY-Tarot-Tag", "Gestaltet aus Beobachtungen und Fundstücken eure eigenen Karten und deutet den Tag wie ein Spiel.", "fullday", "Ganzer Tag", ["Kreativ", "Symbolik", "Collage"], "🔮"),
       makeIdea("fullday-014", "Markthallen-Tag", "Frühstück dort, wo es gut riecht, probiert Neues und lauft dann mit Essen, Ideen und zu viel Brot weiter.", "fullday", "Ganzer Tag", ["Food", "Markt", "Bummeln"], "🥖"),
+      makeIdea("fullday-015", "Schlosspark und Notizbuch", "Nehmt einen Ort mit Weite, Licht und alten Wegen und sammelt dort kleine Beobachtungen in einem Heft.", "fullday", "Ganzer Tag", ["Park", "Ruhig", "Schreiben"], "📓"),
       makeIdea("fullday-016", "Museum plus spätes Essen", "Ein voller Kulturblock am Tag, dann etwas Gutes essen und alles in Ruhe zerpflücken.", "fullday", "Ganzer Tag", ["Kultur", "Food", "Stadt"], "🏺"),
+      makeIdea("fullday-017", "Buchladen-Crawl", "Besucht mehrere Läden, sammelt Fundstücke, liest an ungewöhnlichen Orten weiter und nehmt nur ein Buch mit.", "fullday", "Ganzer Tag", ["Bücher", "Stadt", "Langsam"], "📚"),
+      makeIdea("fullday-018", "Stadtteil für einen Tag", "Wählt bewusst nur ein Viertel und lebt darin komplett: Kaffee, Spaziergang, Mittag, kleine Umwege, Abenddrink.", "fullday", "Ganzer Tag", ["Kiez", "Entdecken", "Stadt"], "🏘️"),
       makeIdea("fullday-019", "Kunst- und Skizzen-Tag", "Nehmt Papier mit und macht an verschiedenen Orten schnelle Skizzen, ohne euch von Qualität bremsen zu lassen.", "fullday", "Ganzer Tag", ["Zeichnen", "Unterwegs", "Kreativ"], "🖍️"),
+      makeIdea("fullday-020", "Wanderung mit Audio-Notizen", "Nehmt unterwegs kurze Sprachmemos auf und baut daraus später euren akustischen Tagesfilm.", "fullday", "Ganzer Tag", ["Wandern", "Audio", "Natur"], "🥾"),
       makeIdea("fullday-021", "Isar von früh bis spät", "Startet mit Kaffee, folgt dem Wasser, schwimmt vielleicht und lasst den Tag irgendwo am Rand des Flusses auslaufen.", "fullday", "Ganzer Tag", ["Isar", "Sommer", "Laufen"], "🏞️"),
       makeIdea("fullday-022", "Analoger Tag", "Lasst Handys fast komplett weg, nutzt nur Papier, Uhrzeitgefühl und spontane Absprachen.", "fullday", "Ganzer Tag", ["Digital Detox", "Langsam", "Experiment"], "📮"),
       makeIdea("fullday-023", "Kulinarische Stadtkarte", "Setzt euch drei bis vier Essensstopps in verschiedenen Vierteln und verbindet sie zu einer Genusstour.", "fullday", "Ganzer Tag", ["Food", "Stadt", "Tour"], "🍜"),
@@ -2367,18 +1842,16 @@
       makeIdea("fullday-025", "Botanischer Garten und Café", "Ein langsamer Tag zwischen Gewächshäusern, Notizen, Pflanzenformen und ruhigen Gesprächen.", "fullday", "Ganzer Tag", ["Natur", "Gewächshaus", "Ruhig"], "🌿"),
       makeIdea("fullday-026", "Schwimmbad-Retro-Tag", "Packt Snacks, Karten und Sonnencreme ein und behandelt einen simplen Badetag wie einen kleinen Sommerurlaub.", "fullday", "Ganzer Tag", ["Sommer", "Wasser", "Leicht"], "🏊"),
       makeIdea("fullday-027", "Radeln zu drei Eisdielen", "Verbindet Strecke und Genuss und vergleicht am Ende sehr ernsthaft Textur, Sorte und Gesamtwirkung.", "fullday", "Ganzer Tag", ["Fahrrad", "Eis", "Tour"], "🍦"),
+      makeIdea("fullday-028", "Eigenes Stadtmagazin sammeln", "Macht Fotos, sammelt Sätze, Flyer, Tickets und baut daraus abends eine Titelseite eures Tages.", "fullday", "Ganzer Tag", ["Collage", "Design", "Stadt"], "📰"),
       makeIdea("fullday-029", "See, Karten, Sonnenuntergang", "Mehr braucht es oft nicht: hinfahren, baden, Karten spielen und möglichst spät zurück.", "fullday", "Ganzer Tag", ["See", "Spiele", "Entspannt"], "🃏"),
-      makeIdea("fullday-034", "Kunst- und Skizzen-Tag", "Nehmt Papier mit und macht an verschiedenen Orten schnelle Skizzen, ohne euch von Qualität bremsen zu lassen.", "fullday", "Ganzer Tag", ["Zeichnen", "Unterwegs", "Kreativ"], "🖍️"),
+      makeIdea("fullday-030", "Bahnhof-zu-Bahnhof-Tour", "Verbindet mehrere Stationen zu einem absichtlich unlogischen Tag und entdeckt dabei überraschende Zwischenräume.", "fullday", "Ganzer Tag", ["Zug", "Route", "Urban"], "🚏"),
+      makeIdea("fullday-031", "Tagesprojekt Collage", "Sammelt unterwegs Papier, Worte und Bilder und klebt am Abend alles zu einer echten Erinnerungsfläche zusammen.", "fullday", "Ganzer Tag", ["Collage", "DIY", "Papier"], "✂️"),
+      makeIdea("fullday-032", "Stadtrand-Abenteuer", "Fahrt bewusst an den Rand der Stadt, wo München plötzlich ganz anders aussieht, und lauft von dort los.", "fullday", "Ganzer Tag", ["Randgebiete", "Entdecken", "Walk"], "🧱"),
+      makeIdea("fullday-033", "Kirchturm- und Aussichtspunkt-Tag", "Sammelt mehrere erhöhte Perspektiven und schaut, wie eine Stadt aus verschiedenen Höhen anders wirkt.", "fullday", "Ganzer Tag", ["Aussicht", "Architektur", "Tagestour"], "🔔"),
+      makeIdea("fullday-034", "Sommerregen-Tag", "Lasst euch vom Wetter nicht abhalten, sondern plant bewusst Cafés, Wege und Orte, die mit Regen noch besser funktionieren.", "fullday", "Ganzer Tag", ["Regen", "Atmosphäre", "Stadt"], "☔"),
       makeIdea("fullday-035", "Morgenmarkt bis Nachtfahrt", "Beginnt ganz früh, sammelt über den Tag Eindrücke und endet mit einer letzten ruhigen Fahrt zurück.", "fullday", "Ganzer Tag", ["Tagesbogen", "Stadt", "Lang"], "🌙"),
       makeIdea("fullday-036", "Filmreifer Picknick-Dreh", "Dreht tagsüber kleine Szenen an schönen Orten und macht daraus abends einen Mini-Reisefilm.", "fullday", "Ganzer Tag", ["Film", "Picknick", "Kreativ"], "🎬"),
-      makeIdea("fullday-037", "Blauer-Tag", "Wählt die Farbe Blau als Leitmotiv und jagt ihr vom Morgen bis zum Abend durch Stadt, Kleidung, Essen und Himmel hinterher.", "fullday", "Ganzer Tag", ["Farbkonzept", "Foto", "Spiel"], "🔵"),
-      
-      // User's custom ideas with correct emojis
-      makeIdea("custom-verschworungstheorie-abend-1776436101563", "Verschwörungstheorie-Abend", "jeder stellt eine Verschwörungstheorie vor mit Powerpoint", "short", "Flexibel", ["Eigene Idee", "2-3 Stunden", "Persönlich"], "🕵️", true),
-      makeIdea("custom-eisbade-nachsten-montag-1776436019800", "Eisbade nächsten Montag", "Gehe Eisbaden am Montag um 6:30 am Eisbach", "date", "Flexibel", ["Eigene Idee", "Date Night", "Persönlich"], "🧊", true),
-      makeIdea("custom-clif-jumping-1776435963782", "Clif jumping", "fahre in die Berge und springe von paar Klippen", "date", "Flexibel", ["Eigene Idee", "Date Night", "Persönlich"], "🪂", true),
-      makeIdea("custom-ice-sliding-1776435861865", "Ice sliding", "Gefriere krocks in einem Block Eis und fahre damit einen Hügel runter", "date", "Flexibel", ["Eigene Idee", "Date Night", "Persönlich"], "🧊", true),
-      makeIdea("custom-slip-and-slide-1776435781359", "Slip and Slide", "Baue eine Slip an Slide mit Sprung", "fullday", "Flexibel", ["Eigene Idee", "Ganzer Tag", "Persönlich"], "🏄", true)
+      makeIdea("fullday-037", "Blauer-Tag", "Wählt die Farbe Blau als Leitmotiv und jagt ihr vom Morgen bis zum Abend durch Stadt, Kleidung, Essen und Himmel hinterher.", "fullday", "Ganzer Tag", ["Farbkonzept", "Foto", "Spiel"], "🔵")
     ];
 
     const state = {
@@ -2417,10 +1890,6 @@
       adminTableBody: document.getElementById("adminTableBody"),
       adminCount: document.getElementById("adminCount"),
       exportButton: document.getElementById("exportButton"),
-      exportAllDataButton: document.getElementById("exportAllDataButton"),
-      importDataButton: document.getElementById("importDataButton"),
-      submitToGitHubButton: document.getElementById("submitToGitHubButton"),
-      pendingChangesBadge: document.getElementById("pendingChangesBadge"),
       adminToggle: document.getElementById("adminToggle"),
       logoButton: document.getElementById("logoButton")
     };
@@ -2471,16 +1940,15 @@
       const edited = getEditedIdeas();
       const deleted = new Set(getDeletedIdeas());
       const custom = getCustomIdeas();
-      const shared = getSharedIdeas();
       const mergedOriginal = originalIdeas
         .filter((idea) => !deleted.has(idea.id))
         .map((idea) => ({ ...idea, ...(edited[idea.id] || {}) }));
-      
+
       const mergedCustom = custom
         .filter((idea) => !deleted.has(idea.id))
         .map((idea) => ({ ...idea, ...(edited[idea.id] || {}) }));
 
-      return [...mergedOriginal, ...mergedCustom, ...shared];
+      return [...mergedOriginal, ...mergedCustom];
     }
 
     function getIdeasByCategory(categoryId) {
@@ -2606,35 +2074,27 @@
         .join("");
     }
 
-    function addCustomIdea(idea) {
-      const ideas = getSharedIdeas();
-      const newIdea = {
-        ...idea,
-        id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
-        isUserAdded: true,
-        addedAt: new Date().toISOString()
-      };
-      ideas.unshift(newIdea);
-      saveSharedIdeas(ideas);
-      renderAdmin();
-      updateStats();
+    function addCustomIdea(payload) {
+      const customIdeas = getCustomIdeas();
+      const idBase = "custom-" + slugify(payload.title || "idee");
+      const id = idBase + "-" + Date.now();
+      customIdeas.unshift({
+        id,
+        title: payload.title,
+        description: payload.description,
+        category: payload.category,
+        duration: "Flexibel",
+        tags: ["Eigene Idee", categoryLabel(payload.category), "Persönlich"],
+        emoji: payload.emoji,
+        isUserAdded: true
+      });
+      writeStorage(STORAGE_KEYS.customIdeas, customIdeas);
     }
 
     function saveAdminEdit(ideaId, patch) {
       const edited = getEditedIdeas();
       edited[ideaId] = { ...(edited[ideaId] || {}), ...patch };
       writeStorage(STORAGE_KEYS.editedIdeas, edited);
-      
-      // Also save to shared ideas for multi-user compatibility
-      const sharedIdeas = getSharedIdeas();
-      const existingSharedIdea = sharedIdeas.find(idea => idea.id === ideaId);
-      if (existingSharedIdea) {
-        const updatedSharedIdea = { ...existingSharedIdea, ...patch };
-        const updatedSharedIdeas = sharedIdeas.map(idea => 
-          idea.id === ideaId ? updatedSharedIdea : idea
-        );
-        saveSharedIdeas(updatedSharedIdeas);
-      }
     }
 
     function deleteIdea(ideaId) {
@@ -2643,11 +2103,6 @@
         deleted.push(ideaId);
         writeStorage(STORAGE_KEYS.deletedIdeas, deleted);
       }
-      
-      // Also remove from shared ideas for multi-user compatibility
-      const sharedIdeas = getSharedIdeas();
-      const updatedSharedIdeas = sharedIdeas.filter(idea => idea.id !== ideaId);
-      saveSharedIdeas(updatedSharedIdeas);
     }
 
     function renderAdmin() {
@@ -2694,77 +2149,6 @@
       link.download = "spark-ideen.json";
       link.click();
       URL.revokeObjectURL(url);
-    }
-
-    function exportAllData() {
-      const allData = {
-        timestamp: new Date().toISOString(),
-        version: "1.0",
-        data: {
-          customIdeas: getCustomIdeas(),
-          editedIdeas: getEditedIdeas(),
-          deletedIdeas: getDeletedIdeas(),
-          sharedIdeas: getSharedIdeas(),
-          sharedImages: getSharedImages(),
-          history: readStorage(STORAGE_KEYS.history, []),
-          adminUnlocked: readStorage(STORAGE_KEYS.adminUnlocked, false),
-          easterEgg: readStorage(STORAGE_KEYS.easterEgg, false)
-        }
-      };
-      
-      const blob = new Blob([JSON.stringify(allData, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `spark-all-data-${new Date().toISOString().split('T')[0]}.json`;
-      link.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function importData(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const data = JSON.parse(e.target.result);
-          
-          if (data.data) {
-            // Import all data types
-            if (data.data.customIdeas) writeStorage(STORAGE_KEYS.customIdeas, data.data.customIdeas);
-            if (data.data.editedIdeas) writeStorage(STORAGE_KEYS.editedIdeas, data.data.editedIdeas);
-            if (data.data.deletedIdeas) writeStorage(STORAGE_KEYS.deletedIdeas, data.data.deletedIdeas);
-            if (data.data.sharedIdeas) saveSharedIdeas(data.data.sharedIdeas);
-            if (data.data.sharedImages) saveSharedImages(data.data.sharedImages);
-            if (data.data.history) writeStorage(STORAGE_KEYS.history, data.data.history);
-            if (data.data.adminUnlocked !== undefined) writeStorage(STORAGE_KEYS.adminUnlocked, data.data.adminUnlocked);
-            if (data.data.easterEgg !== undefined) writeStorage(STORAGE_KEYS.easterEgg, data.data.easterEgg);
-            
-            // Refresh the interface
-            renderAdmin();
-            updateStats();
-            renderGallery();
-            
-            alert('Daten erfolgreich importiert! Seite wird neu geladen...');
-            setTimeout(() => location.reload(), 1000);
-          } else {
-            // If it's just ideas array (old format)
-            if (Array.isArray(data)) {
-              writeStorage(STORAGE_KEYS.customIdeas, data);
-              renderAdmin();
-              updateStats();
-              alert('Ideen erfolgreich importiert!');
-            }
-          }
-        } catch (error) {
-          alert('Fehler beim Import: ' + error.message);
-        }
-      };
-      reader.readAsText(file);
-      
-      // Reset file input
-      event.target.value = '';
     }
 
     function unlockAdmin() {
@@ -2859,43 +2243,6 @@
       elements.adminSearch.addEventListener("input", renderAdmin);
       elements.adminFilter.addEventListener("change", renderAdmin);
       elements.exportButton.addEventListener("click", exportIdeas);
-      elements.exportAllDataButton.addEventListener("click", exportAllData);
-      elements.importDataButton.addEventListener("click", () => {
-        document.getElementById('importDataFile').click();
-      });
-      document.getElementById('importDataFile').addEventListener("change", importData);
-
-      // Submit to GitHub Button
-      if (elements.submitToGitHubButton) {
-        elements.submitToGitHubButton.addEventListener("click", async () => {
-          const result = await submissionManager.submitToGitHub();
-          if (result.success) {
-            alert(result.message);
-            updatePendingChangesBadge();
-          } else {
-            alert('Fehler: ' + result.message);
-          }
-        });
-      }
-
-      // Badge-Aktualisierung bei Datenänderungen
-      const originalAddCustomIdea = addCustomIdea;
-      addCustomIdea = function(idea) {
-        originalAddCustomIdea(idea);
-        updatePendingChangesBadge();
-      };
-
-      const originalSaveAdminEdit = saveAdminEdit;
-      saveAdminEdit = function(ideaId, patch) {
-        originalSaveAdminEdit(ideaId, patch);
-        updatePendingChangesBadge();
-      };
-
-      const originalDeleteIdea = deleteIdea;
-      deleteIdea = function(ideaId) {
-        originalDeleteIdea(ideaId);
-        updatePendingChangesBadge();
-      };
 
       elements.adminAddForm.addEventListener("submit", (event) => {
         event.preventDefault();
@@ -2974,18 +2321,6 @@
 
     function saveSharedImages(images) {
       localStorage.setItem(STORAGE_KEYS.sharedImages, JSON.stringify(images));
-    }
-
-    function getSharedIdeas() {
-      try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEYS.sharedIdeas) || '[]');
-      } catch {
-        return [];
-      }
-    }
-
-    function saveSharedIdeas(ideas) {
-      localStorage.setItem(STORAGE_KEYS.sharedIdeas, JSON.stringify(ideas));
     }
 
     function addImageToGallery(imageData, filename) {
@@ -3130,15 +2465,6 @@
       // Check authentication first
       checkAuthentication();
       
-      // Start live synchronization
-      liveSync.startAutoSync();
-      
-      // Load initial data if available from HTML injection
-      if (window.sparkInitialData) {
-        liveSync.loadDataFromJson(JSON.stringify(window.sparkInitialData));
-        console.log('Live-Sync: Initial data loaded from HTML injection');
-      }
-      
       // Add password form listener
       document.getElementById('passwordForm').addEventListener('submit', handlePasswordSubmit);
       
@@ -3182,7 +2508,6 @@
       resetCard();
       renderAdmin();
       updateStats();
-      updatePendingChangesBadge();
       initImageUpload();
       if (state.easterEggEnabled) {
         document.body.style.filter = "saturate(1.08) hue-rotate(-8deg)";
@@ -3190,13 +2515,6 @@
     }
 
     init();
-    
-    // AUTO-LIVE-SYNC DATA INJECTION POINT
-    window.sparkInitialData = {"version":1,"timestamp":1713369000000,"sharedIdeas":[],"sharedImages":[],"customIdeas":[],"editedIdeas":{},"deletedIdeas":[],"history":{"date":[],"short":[],"fullday":[]}};
-    console.log('Live-Sync: Initial data loaded from HTML, version', 1);
-    
-    // This will be automatically replaced by GitHub Actions with latest data
-    console.log('Live-Sync: Ready for data injection');
   </script>
 </body>
 </html>
