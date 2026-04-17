@@ -46,29 +46,10 @@ jobs:
 
     - name: Update HTML with latest data
       run: |
-        # Read current data safely
-        DATA_VERSION=$(node -e "
-          try {
-            const data = JSON.parse(require('fs').readFileSync('spark-data.json', 'utf8'));
-            console.log(data.version || 1);
-          } catch (e) {
-            console.log(1);
-          }
-        ")
-        
-        DATA_JSON=$(node -e "
-          try {
-            const data = JSON.parse(require('fs').readFileSync('spark-data.json', 'utf8'));
-            console.log(JSON.stringify(data));
-          } catch (e) {
-            console.log('{}');
-          }
-        ")
-        
         # Create backup of current HTML
         cp index.html index.html.backup
         
-        # Update HTML with new data using Node.js for better JSON handling
+        # Update HTML with new data using Node.js
         node -e "
           const fs = require('fs');
           try {
@@ -80,17 +61,17 @@ jobs:
             
             // Update data injection
             const dataPattern = /window\.sparkInitialData = .*?;/;
-            const newData = \`window.sparkInitialData = \${JSON.stringify(data)};\`;
+            const newData = 'window.sparkInitialData = ' + JSON.stringify(data) + ';';
             html = html.replace(dataPattern, newData);
             
             // Update version in console log
-            const versionPattern = /console\.log\('Live-Sync: Initial data loaded from HTML, version', \\d+\);/;
-            const newVersion = \`console.log('Live-Sync: Initial data loaded from HTML, version', \${data.version || 1});\`;
+            const versionPattern = /console\.log\('Live-Sync: Initial data loaded from HTML, version', \\\\d+\);/;
+            const newVersion = 'console.log(\\'Live-Sync: Initial data loaded from HTML, version', ' + (data.version || 1) + ');';
             html = html.replace(versionPattern, newVersion);
             
             // Write updated HTML
             fs.writeFileSync('index.html', html);
-            console.log(\`HTML updated with version \${data.version || 1}\`);
+            console.log('HTML updated with version ' + (data.version || 1));
           } catch (e) {
             console.error('Error updating HTML:', e);
             process.exit(1);
