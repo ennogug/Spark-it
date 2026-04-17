@@ -1462,7 +1462,6 @@
     <footer>
       <div class="footer-stamp">Spark'it · Geschenk zum 18. für Vincent Braun</div>
       <button class="admin-secret" id="adminToggle">Archiv</button>
-      <button class="admin-secret" id="logoutButton" style="margin-left: 8px;">Abmelden</button>
     </footer>
   </div>
 
@@ -2156,105 +2155,43 @@
       }
     }
 
-    // Authentication Functions
-    const API_BASE = window.location.protocol + '//' + window.location.host + '/api';
-    let cachedImages = [];
-    let isAuthenticated = false;
-
-    async function checkAuthStatus() {
-      try {
-        const response = await fetch(`${API_BASE}/auth-status`);
-        if (response.ok) {
-          const data = await response.json();
-          isAuthenticated = data.isAuthenticated;
-          if (!isAuthenticated) {
-            window.location.href = '/login';
-          }
-        } else {
-          window.location.href = '/login';
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        window.location.href = '/login';
-      }
-    }
-
-    async function logout() {
-      try {
-        const response = await fetch(`${API_BASE}/logout`, {
-          method: 'POST'
-        });
-        if (response.ok) {
-          window.location.href = '/login';
-        }
-      } catch (error) {
-        console.error('Logout failed:', error);
-      }
-    }
-
     // Image Upload and Gallery Functions
+    STORAGE_KEYS.uploadedImages = 'spark-uploaded-images';
 
-    async function getUploadedImages() {
+    function getUploadedImages() {
       try {
-        const response = await fetch(`${API_BASE}/images`);
-        if (response.ok) {
-          const data = await response.json();
-          cachedImages = data.images;
-          return data.images;
-        }
-      } catch (error) {
-        console.error('Error fetching images:', error);
-      }
-      return cachedImages;
-    }
-
-    async function uploadImages(files) {
-      const formData = new FormData();
-      Array.from(files).forEach(file => {
-        formData.append('images', file);
-      });
-
-      try {
-        const response = await fetch(`${API_BASE}/upload`, {
-          method: 'POST',
-          body: formData
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          await getUploadedImages(); // Refresh cache
-          renderGallery();
-          return result;
-        } else {
-          throw new Error('Upload failed');
-        }
-      } catch (error) {
-        console.error('Upload error:', error);
-        alert('Fehler beim Hochladen der Bilder. Bitte versuche es erneut.');
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.uploadedImages) || '[]');
+      } catch {
+        return [];
       }
     }
 
-    async function deleteImageFromGallery(uploadToken) {
-      try {
-        const response = await fetch(`${API_BASE}/images/${uploadToken}`, {
-          method: 'DELETE'
-        });
-
-        if (response.ok) {
-          await getUploadedImages(); // Refresh cache
-          renderGallery();
-        } else {
-          throw new Error('Delete failed');
-        }
-      } catch (error) {
-        console.error('Delete error:', error);
-        alert('Fehler beim Löschen des Bildes. Bitte versuche es erneut.');
-      }
+    function saveUploadedImages(images) {
+      localStorage.setItem(STORAGE_KEYS.uploadedImages, JSON.stringify(images));
     }
 
-    async function renderGallery() {
+    function addImageToGallery(imageData, filename) {
+      const images = getUploadedImages();
+      const newImage = {
+        id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+        data: imageData,
+        filename: filename,
+        uploadedAt: new Date().toISOString()
+      };
+      images.unshift(newImage);
+      saveUploadedImages(images);
+      renderGallery();
+    }
+
+    function deleteImageFromGallery(imageId) {
+      const images = getUploadedImages().filter(img => img.id !== imageId);
+      saveUploadedImages(images);
+      renderGallery();
+    }
+
+    function renderGallery() {
       const galleryGrid = document.getElementById('galleryGrid');
-      const images = await getUploadedImages();
+      const images = getUploadedImages();
       
       if (images.length === 0) {
         galleryGrid.innerHTML = '<div class="empty-gallery">Noch keine Bilder hochgeladen. Lade deine Erinnerungen hoch!</div>';
@@ -2265,29 +2202,31 @@
         const rotation = (index % 3 - 1) * 6; // -6, 0, or 6 degrees rotation
         return `
           <div class="gallery-item" style="--rotation: ${rotation}">
-            <img src="${image.url}" alt="${image.original_filename}" loading="lazy">
-            <button class="delete-btn" data-upload-token="${image.upload_token}" aria-label="Bild löschen">×</button>
+            <img src="${image.data}" alt="${image.filename}" loading="lazy">
+            <button class="delete-btn" data-image-id="${image.id}" aria-label="Bild löschen">×</button>
           </div>
         `;
       }).join('');
     }
 
-    async function handleImageUpload(files) {
-      const validFiles = Array.from(files).filter(file => {
+    function handleImageUpload(files) {
+      Array.from(files).forEach(file => {
         if (!file.type.startsWith('image/')) {
           console.warn('Nur Bilddateien sind erlaubt:', file.name);
-          return false;
+          return;
         }
+
         if (file.size > 10 * 1024 * 1024) { // 10MB limit
           console.warn('Datei zu groß (max 10MB):', file.name);
-          return false;
+          return;
         }
-        return true;
-      });
 
-      if (validFiles.length > 0) {
-        await uploadImages(validFiles);
-      }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          addImageToGallery(e.target.result, file.name);
+        };
+        reader.readAsDataURL(file);
+      });
     }
 
     // Initialize image upload functionality
@@ -2333,9 +2272,9 @@
       // Gallery delete functionality
       document.addEventListener('click', (e) => {
         if (e.target.classList.contains('delete-btn')) {
-          const uploadToken = e.target.dataset.uploadToken;
+          const imageId = e.target.dataset.imageId;
           if (confirm('Möchtest du dieses Bild wirklich löschen?')) {
-            deleteImageFromGallery(uploadToken);
+            deleteImageFromGallery(imageId);
           }
         }
       });
@@ -2345,10 +2284,7 @@
     }
 
     // Update init function
-    async function init() {
-      // Check authentication first
-      await checkAuthStatus();
-      
+    function init() {
       seedSelects();
       renderCategoryButtons();
       bindEvents();
@@ -2356,13 +2292,6 @@
       renderAdmin();
       updateStats();
       initImageUpload();
-      
-      // Bind logout button
-      const logoutButton = document.getElementById('logoutButton');
-      if (logoutButton) {
-        logoutButton.addEventListener('click', logout);
-      }
-      
       if (state.easterEggEnabled) {
         document.body.style.filter = "saturate(1.08) hue-rotate(-8deg)";
       }
