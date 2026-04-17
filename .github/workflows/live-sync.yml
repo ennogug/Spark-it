@@ -1,0 +1,113 @@
+name: Live Data Synchronization
+
+on:
+  push:
+    paths:
+      - 'spark-data.json'
+  workflow_dispatch:
+  schedule:
+    # Run every 2 minutes for near real-time sync
+    - cron: '*/2 * * * *'
+
+jobs:
+  live-sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Check for data file
+      id: check_data
+      run: |
+        if [ -f "spark-data.json" ]; then
+          echo "has_data=true" >> $GITHUB_OUTPUT
+          echo "data_size=$(stat -c%s spark-data.json)" >> $GITHUB_OUTPUT
+          echo "last_modified=$(git log -1 --format=%ct -- spark-data.json 2>/dev/null || echo 0)" >> $GITHUB_OUTPUT
+        else
+          echo "has_data=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Create data file if missing
+      if: steps.check_data.outputs.has_data == 'false'
+      run: |
+        echo '{"version":1,"timestamp":'$(date +%s)',"sharedIdeas":[],"sharedImages":[],"customIdeas":[],"editedIdeas":{},"deletedIdeas":[],"history":{"date":[],"short":[],"fullday":[]}}' > spark-data.json
+
+    - name: Update HTML with latest data
+      run: |
+        # Extract data from JSON file
+        node -e "
+          const fs = require('fs');
+          const data = JSON.parse(fs.readFileSync('spark-data.json', 'utf8'));
+          
+          // Read current HTML
+          let html = fs.readFileSync('index.html', 'utf8');
+          
+          // Find the data injection point
+          const dataInjectionPoint = '// AUTO-LIVE-SYNC DATA INJECTION POINT';
+          const injectionIndex = html.indexOf(dataInjectionPoint);
+          
+          if (injectionIndex > 0) {
+            // Create data injection script
+            const dataScript = \`
+            // AUTO-LIVE-SYNC DATA INJECTION POINT
+            window.sparkInitialData = \${JSON.stringify(data)};
+            console.log('Live-Sync: Initial data loaded from HTML, version', \${data.version});
+            \`;
+            
+            // Replace existing injection or add new one
+            const startIndex = html.indexOf('// AUTO-LIVE-SYNC DATA INJECTION POINT');
+            const endIndex = html.indexOf('\\n', startIndex);
+            
+            if (startIndex > 0 && endIndex > startIndex) {
+              html = html.substring(0, startIndex) + dataScript + html.substring(endIndex);
+            } else {
+              // Add injection point before closing script tag
+              const lastScriptIndex = html.lastIndexOf('</script>');
+              if (lastScriptIndex > 0) {
+                html = html.substring(0, lastScriptIndex) + dataScript + '\\n' + html.substring(lastScriptIndex);
+              }
+            }
+            
+            fs.writeFileSync('index.html', html);
+            console.log('HTML updated with latest data');
+          }
+        "
+
+    - name: Update timestamp and version
+      run: |
+        node -e "
+          const fs = require('fs');
+          const data = JSON.parse(fs.readFileSync('spark-data.json', 'utf8'));
+          data.version = (data.version || 0) + 1;
+          data.timestamp = Date.now();
+          fs.writeFileSync('spark-data.json', JSON.stringify(data, null, 2));
+          console.log('Data version updated to', data.version);
+        "
+
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add index.html spark-data.json
+        git diff --staged --quiet || git commit -m "Live sync update - v$(node -e "console.log(JSON.parse(require('fs').readFileSync('spark-data.json', 'utf8')).version)") [skip ci]"
+        git push
+
+    - name: Deploy to GitHub Pages
+      if: success()
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./
+        publish_branch: gh-pages

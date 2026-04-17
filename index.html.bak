@@ -1684,197 +1684,8 @@
       easterEgg: "spark.easterEgg",
       authenticated: "spark.authenticated",
       sharedImages: "spark.sharedImages",
-      sharedIdeas: "spark.sharedIdeas",
-      lastSync: "spark.lastSync",
-      version: "spark.version"
+      sharedIdeas: "spark.sharedIdeas"
     };
-
-    // Automatische Live-Synchronisation - vollständig im HTML implementiert
-    class AutoLiveSync {
-      constructor() {
-        this.syncInterval = 30000; // 30 Sekunden
-        this.isOnline = navigator.onLine;
-        this.currentVersion = parseInt(localStorage.getItem(STORAGE_KEYS.version) || '1');
-        this.lastSyncTime = parseInt(localStorage.getItem(STORAGE_KEYS.lastSync) || '0');
-        this.githubRepo = window.location.hostname.includes('github.io') ? 
-          window.location.pathname.replace(/\/[^\/]*$/, '') : '';
-        this.dataFileName = 'spark-data.json';
-      }
-
-      // Alle Daten als JSON-String für HTML-Speicherung
-      getAllDataAsJson() {
-        const data = {
-          version: this.currentVersion + 1,
-          timestamp: Date.now(),
-          sharedIdeas: getSharedIdeas(),
-          sharedImages: getSharedImages(),
-          customIdeas: getCustomIdeas(),
-          editedIdeas: getEditedIdeas(),
-          deletedIdeas: getDeletedIdeas(),
-          history: getHistory()
-        };
-        return JSON.stringify(data, null, 2);
-      }
-
-      // Daten aus JSON-String laden
-      loadDataFromJson(jsonString) {
-        try {
-          const data = JSON.parse(jsonString);
-          
-          // Nur laden wenn neuer als lokale Version
-          if (data.version > this.currentVersion) {
-            if (data.sharedIdeas) saveSharedIdeas(data.sharedIdeas);
-            if (data.sharedImages) saveSharedImages(data.sharedImages);
-            if (data.customIdeas) writeStorage(STORAGE_KEYS.customIdeas, data.customIdeas);
-            if (data.editedIdeas) writeStorage(STORAGE_KEYS.editedIdeas, data.editedIdeas);
-            if (data.deletedIdeas) writeStorage(STORAGE_KEYS.deletedIdeas, data.deletedIdeas);
-            if (data.history) writeStorage(STORAGE_KEYS.history, data.history);
-            
-            this.currentVersion = data.version;
-            localStorage.setItem(STORAGE_KEYS.version, this.currentVersion.toString());
-            
-            // UI aktualisieren
-            if (typeof renderAdmin === 'function') renderAdmin();
-            if (typeof updateStats === 'function') updateStats();
-            if (typeof renderGallery === 'function') renderGallery();
-            
-            console.log('Live-Sync: Daten aktualisiert auf Version', this.currentVersion);
-            return true;
-          }
-        } catch (error) {
-          console.warn('Live-Sync: Fehler beim Laden der Daten', error);
-        }
-        return false;
-      }
-
-      // Automatische Synchronisation mit GitHub Pages
-      async syncWithGitHub() {
-        if (!this.isOnline || !this.githubRepo) {
-          return false;
-        }
-
-        try {
-          // Versuche, Daten von GitHub zu holen
-          const response = await fetch(`${this.githubRepo}/${this.dataFileName}?t=${Date.now()}`);
-          if (response.ok) {
-            const jsonData = await response.text();
-            this.loadDataFromJson(jsonData);
-          }
-        } catch (error) {
-          console.log('Live-Sync: Keine Remote-Daten gefunden');
-        }
-
-        return true;
-      }
-
-      // Daten zu GitHub hochladen (simuliert durch localStorage)
-      saveToGitHub() {
-        // In einer echten Implementierung würde dies GitHub API verwenden
-        // Für GitHub Pages speichern wir die Daten im localStorage
-        const jsonData = this.getAllDataAsJson();
-        
-        // Simuliere GitHub-Speicherung durch localStorage
-        localStorage.setItem('spark_github_backup', jsonData);
-        
-        // Version und Zeitstempel aktualisieren
-        this.currentVersion++;
-        this.lastSyncTime = Date.now();
-        localStorage.setItem(STORAGE_KEYS.version, this.currentVersion.toString());
-        localStorage.setItem(STORAGE_KEYS.lastSync, this.lastSyncTime.toString());
-        
-        console.log('Live-Sync: Daten gespeichert, Version', this.currentVersion);
-        
-        // Automatische Weiterleitung zur GitHub Pages Aktualisierung
-        this.triggerGitHubUpdate();
-      }
-
-      // GitHub Pages Aktualisierung auslösen
-      triggerGitHubUpdate() {
-        // Erstelle einen unsichtbaren Link zum automatischen Update
-        const updateUrl = `${window.location.origin}${this.githubRepo}/update.html?v=${Date.now()}`;
-        
-        // Sende POST-Request an GitHub Pages (simuliert)
-        fetch(updateUrl, { method: 'POST', body: this.getAllDataAsJson() })
-          .catch(() => {
-            // Wenn das fehlschlägt, nutzen wir localStorage als Fallback
-            console.log('Live-Sync: Lokale Speicherung als Fallback');
-          });
-      }
-
-      // Automatische Synchronisation starten
-      startAutoSync() {
-        console.log('Live-Sync: Automatische Synchronisation gestartet');
-        
-        // Sofortige Synchronisation
-        this.syncWithGitHub();
-        
-        // Periodische Synchronisation
-        setInterval(() => {
-          if (this.isOnline) {
-            this.syncWithGitHub();
-          }
-        }, this.syncInterval);
-
-        // Online/Offline-Erkennung
-        window.addEventListener('online', () => {
-          this.isOnline = true;
-          this.syncWithGitHub();
-        });
-        
-        window.addEventListener('offline', () => {
-          this.isOnline = false;
-        });
-
-        // Automatische Speicherung bei Datenänderungen
-        this.setupDataChangeListeners();
-      }
-
-      // Listener für Datenänderungen einrichten
-      setupDataChangeListeners() {
-        // Interzeptiere localStorage-Änderungen
-        const originalSetItem = localStorage.setItem;
-        localStorage.setItem = (key, value) => {
-          originalSetItem.call(localStorage, key, value);
-          
-          // Prüfe ob es sich um relevante Daten handelt
-          const relevantKeys = [
-            STORAGE_KEYS.sharedIdeas,
-            STORAGE_KEYS.sharedImages,
-            STORAGE_KEYS.customIdeas,
-            STORAGE_KEYS.editedIdeas,
-            STORAGE_KEYS.deletedIdeas,
-            STORAGE_KEYS.history
-          ];
-          
-          if (relevantKeys.includes(key)) {
-            // Verzögerte Speicherung um mehrere Änderungen zu bündeln
-            clearTimeout(this.saveTimeout);
-            this.saveTimeout = setTimeout(() => {
-              this.saveToGitHub();
-            }, 1000);
-          }
-        };
-      }
-
-      // Manuelle Synchronisation auslösen
-      forceSync() {
-        this.saveToGitHub();
-        setTimeout(() => this.syncWithGitHub(), 1000);
-      }
-
-      // Sync-Status anzeigen
-      getSyncStatus() {
-        return {
-          isOnline: this.isOnline,
-          currentVersion: this.currentVersion,
-          lastSync: new Date(this.lastSyncTime).toLocaleString(),
-          syncInterval: this.syncInterval / 1000 + 's'
-        };
-      }
-    }
-
-    // Live-Synchronisation initialisieren
-    const liveSync = new AutoLiveSync();
 
     // Password protection
     const CORRECT_PASSWORD = "20Vinc08:)";
@@ -1932,96 +1743,97 @@
 
     const originalIdeas = [
       // User's edited ideas with correct emojis
-      makeIdea("date-002", "Spazieren im Wald", "Nehmt euch Tee im Becher mit und macht aus einem einfachen Waldweg einen kleinen Rückzug aus allem.", "short", "Flexibel", ["2-3 Stunden", "Flexibel", "Bearbeitet"], "🌲"),
-      makeIdea("date-004", "Eisbach surfen gehen", "Wenn die Bedingungen passen, wird daraus ein echtes München-Abenteuer; alternativ bleibt der Spot als energiegeladene Session am Wasser.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "🏄"),
+      makeIdea("date-002", "Spazieren im Wald", "Nehmt euch Tee im Becher mit und macht aus einem einfachen Waldweg einen kleinen Rückzug aus allem.", "short", "Flexibel", ["2-3 Stunden", "Flexibel", "Bearbeitet"], "🌳"),
+      makeIdea("date-004", "Eisbach surfen gehen", "Wenn die Bedingungen passen, wird daraus ein echtes München-Abenteuer; alternativ bleibt der Spot als energiegeladene Session am Wasser.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "🏄‍♂️"),
       makeIdea("date-005", "Tennis spielen", "Bucht spontan einen Platz oder nehmt Schläger mit in den Park und spielt locker ohne Leistungsdruck.", "short", "Flexibel", ["2-3 Stunden", "Flexibel", "Bearbeitet"], "🎾"),
-      makeIdea("date-007", "U-Bahn-Wein-Expedition", "Ein Weinglas, eine Flasche und an zufälligen Stationen aussteigen: Jede Haltestelle wird kurz zu eurem Forschungsgebiet.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "🍷"),
-      makeIdea("date-009", "Billigwein-Verkostung", "Kauft mehrere günstige Flaschen, versteckt die Etiketten und kürt ganz ernsthaft den absurdesten Sieger.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "🍾"),
-      makeIdea("date-013", "Fußballgolf", "Stellt weit entfernt einen Eimer auf und spielt mit möglichst wenigen Schüssen quer durch eure Umgebung.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "⚽"),
-      makeIdea("date-014", "Tennis im Garten", "Improvisiert Netz, Linien und Regeln und macht aus dem Garten einen leicht lächerlichen Center Court.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "🏡"),
-      makeIdea("date-015", "Gartentag ohne Handys", "Alles Digitale bleibt drinnen und ihr verbringt ein paar Stunden nur mit Sonnenlicht, Getränken und echter Langeweile.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "📵"),
-      makeIdea("date-020", "Bootfahren auf dem Starnberger See", "Ein ruhiger Klassiker mit Aussicht, Wasser und genau der richtigen Menge Sommerfilm-Gefühl.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "🚤"),
+      makeIdea("date-007", "U-Bahn-Wein-Expedition", "Ein Weinglas, eine Flasche und an zufälligen Stationen aussteigen: Jede Haltestelle wird kurz zu eurem Forschungsgebiet.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "🚂"),
+      makeIdea("date-009", "Billigwein-Verkostung", "Kauft mehrere günstige Flaschen, versteckt die Etiketten und kürt ganz ernsthaft den absurdesten Sieger.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "🍷"),
+      makeIdea("date-013", "Fußballgolf", "Stellt weit entfernt einen Eimer auf und spielt mit möglichst wenigen Schüssen quer durch eure Umgebung.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "⛳️"),
+      makeIdea("date-014", "Tennis im Garten", "Improvisiert Netz, Linien und Regeln und macht aus dem Garten einen leicht lächerlichen Center Court.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "🎾"),
+      makeIdea("date-015", "Gartentag ohne Handys", "Alles Digitale bleibt drinnen und ihr verbringt ein paar Stunden nur mit Sonnenlicht, Getränken und echter Langeweile.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "🌞"),
+      makeIdea("date-020", "Bootfahren auf dem Starnberger See", "Ein ruhiger Klassiker mit Aussicht, Wasser und genau der richtigen Menge Sommerfilm-Gefühl.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "🛥️"),
       makeIdea("date-021", "Schokolade-auspacken-Spiel", "Verpackt Schokolade mehrfach, würfelt um Tempo und lacht über die überraschend intensive Spannung.", "short", "Flexibel", ["2-3 Stunden", "Flexibel", "Bearbeitet"], "🍫"),
-      makeIdea("date-022", "Papierflieger-Wettbewerb", "Baut verschiedene Modelle, testet Wurfweiten und führt ein übertrieben professionelles Ranking.", "short", "Flexibel", ["2-3 Stunden", "Flexibel", "Bearbeitet"], "🛩️"),
-      makeIdea("date-023", "Wild Golf", "Sucht euch absurde Hindernisse und spielt eine Runde Minigolf ohne Minigolfplatz.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "⛳"),
+      makeIdea("date-022", "Papierflieger-Wettbewerb", "Baut verschiedene Modelle, testet Wurfweiten und führt ein übertrieben professionelles Ranking.", "short", "Flexibel", ["2-3 Stunden", "Flexibel", "Bearbeitet"], "🛬"),
+      makeIdea("date-023", "Wild Golf", "Sucht euch absurde Hindernisse und spielt eine Runde Minigolf ohne Minigolfplatz.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "🏌️"),
       makeIdea("date-028", "Karaoke zu Hause", "Baut ein kleines Bewertungssystem mit Kategorien wie Bühnenpräsenz, Mut und völlig unnötigem Pathos.", "short", "Flexibel", ["2-3 Stunden", "Flexibel", "Bearbeitet"], "🎤"),
-      makeIdea("date-032", "Hängematte und Lesestunde", "Spannt eine Hängematte auf, nehmt Snacks mit und verschwindet für ein paar Kapitel aus dem Rest des Tages.", "short", "Flexibel", ["2-3 Stunden", "Flexibel", "Bearbeitet"], "🪢"),
-      makeIdea("short-001", "Schlauchboottour auf der Isar", "Packt nur das Nötigste ein und lasst euch für ein paar Stunden vom Wasser und der Stimmung treiben.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "🛶"),
+      makeIdea("date-032", "Hängematte und Lesestunde", "Spannt eine Hängematte auf, nehmt Snacks mit und verschwindet für ein paar Kapitel aus dem Rest des Tages.", "short", "Flexibel", ["2-3 Stunden", "Flexibel", "Bearbeitet"], "🛋️"),
+      makeIdea("short-001", "Schlauchboottour auf der Isar", "Packt nur das Nötigste ein und lasst euch für ein paar Stunden vom Wasser und der Stimmung treiben.", "fullday", "Flexibel", ["Ganzer Tag", "Flexibel", "Bearbeitet"], "🚣"),
       makeIdea("short-009", "Vinyl-Flohmarkt", "Jede Person sucht der anderen eine Platte aus, die irgendwie überraschend gut passen könnte.", "date", "Flexibel", ["Date Night", "Flexibel", "Bearbeitet"], "💿"),
       makeIdea("short-016", "Nachtwanderung", "Geht nach Einbruch der Dunkelheit los und versucht, Geräusche und Zeichen der Nacht zu sammeln.", "short", "Flexibel", ["2-3 Stunden", "Flexibel", "Bearbeitet"], "🔦"),
-      makeIdea("short-017", "Sternenhimmel", "Baut ein Teleskop, legt euch raus und macht aus Beobachten der Sterne ein Date", "date", "Flexibel", ["Date Night", "Flexibel", "Bearbeitet"], "🔭"),
+      makeIdea("short-017", "Sternenhimmel", "Baut ein  Teleskop, legt euch raus und macht aus Beobachten der Sterne ein Date", "date", "Flexibel", ["Date Night", "Flexibel", "Bearbeitet"], "🔭"),
       
       // Original ideas that weren't deleted
       makeIdea("date-003", "Pool spielen gehen", "Ein paar Runden Billard, leichte Konkurrenz und danach noch ein Drink oder Snack zum Nachbesprechen.", "date", "Abend", ["Spiel", "Indoor", "Duell"], "🎱"),
       makeIdea("date-006", "Brettspiele spielen", "Sucht euch ein Spiel, das ein bisschen Chaos erlaubt, und macht den Abend zur Mini-Meisterschaft.", "date", "Abend", ["Indoor", "Spiel", "Gemütlich"], "🎲"),
       makeIdea("date-008", "Gemeinsam malen", "Sucht euch ein Thema, legt Musik auf und malt ohne Anspruch, nur auf Stimmung und Spaß.", "date", "Abend", ["Kreativ", "Ruhig", "Farben"], "🎨"),
-      makeIdea("date-010", "Fotobuch-Abend", "Blättert alte Fotos durch, erzählt euch die vergessenen Geschichten dazu und ergänzt neue Randnotizen.", "date", "Abend", ["Erinnerungen", "Ruhig", "Persönlich"], "📚"),
-      makeIdea("date-011", "Strava-Kunst malen", "Plant eine Lauf- oder Gehstrecke so, dass am Ende auf der Karte ein Motiv entsteht und haltet das Ergebnis fest.", "date", "2-3 Std", ["Kreativ", "Sport", "Digital"], "🗺️"),
-      makeIdea("date-012", "Barhopping zu zweit", "Setzt euch pro Bar eine kleine Aufgabe und macht aus dem Abend eine charmant-chaotische Mini-Tour.", "date", "Abend", ["Nacht", "Stadt", "Bar"], "🍸"),
-      makeIdea("date-016", "Planetarium", "Taucht gemeinsam in Sternbilder, Dunkelheit und diesen seltsam schönen Raum-Zeit-Modus ein.", "date", "Abend", ["Kultur", "Indoor", "Kosmos"], "🪐"),
+      makeIdea("date-010", "Fotobuch-Abend", "Blättert alte Fotos durch, erzählt euch die vergessenen Geschichten dazu und ergänzt neue Randnotizen.", "date", "Abend", ["Erinnerungen", "Ruhig", "Persönlich"], "📸"),
+      makeIdea("date-011", "Strava-Kunst malen", "Plant eine Lauf- oder Gehstrecke so, dass am Ende auf der Karte ein Motiv entsteht und haltet das Ergebnis fest.", "date", "2-3 Std", ["Kreativ", "Sport", "Digital"], "🏃"),
+      makeIdea("date-012", "Barhopping zu zweit", "Setzt euch pro Bar eine kleine Aufgabe und macht aus dem Abend eine charmant-chaotische Mini-Tour.", "date", "Abend", ["Nacht", "Stadt", "Bar"], "🍺"),
+      makeIdea("date-016", "Planetarium", "Taucht gemeinsam in Sternbilder, Dunkelheit und diesen seltsam schönen Raum-Zeit-Modus ein.", "date", "Abend", ["Kultur", "Indoor", "Kosmos"], "🌌"),
       makeIdea("date-017", "Gegenseitig zeichnen", "Stellt einen Timer, zeichnet schnell mehrere Versionen und kürt am Ende die frechste Ähnlichkeit.", "date", "Abend", ["Kreativ", "Portrait", "Humor"], "✏️"),
-      makeIdea("date-018", "Pixel Arena", "Geht in die Pixel Arena und spielt euch gemeinsam durch Licht, Reaktion und leicht absurden Ehrgeiz.", "date", "2-3 Std", ["Action", "Indoor", "Games"], "🕹️"),
-      makeIdea("date-019", "Wohnzimmer-Pool mit Murmeln", "Baut aus Büchern, Murmeln und Stäbchen euren eigenen Billardtisch und nehmt die Regeln völlig ernst.", "date", "2-3 Std", ["DIY", "Spiel", "Chaos"], "📘"),
-      makeIdea("date-025", "Eigene Cocktails erfinden", "Nehmt ein paar Zutaten, gebt euren Kreationen Namen und bewertet ehrlich nach Geschmack und Stil.", "date", "Abend", ["Mixen", "Kreativ", "Bar"], "🍹"),
-      makeIdea("date-027", "Postkarten an euch in 10 Jahren", "Schreibt euch Zukunftspost, steckt alles in Umschläge und versteckt sie an einem sicheren Ort.", "date", "Abend", ["Persönlich", "Schreiben", "Ritual"], "💌"),
+      makeIdea("date-018", "Pixel Arena", "Geht in die Pixel Arena und spielt euch gemeinsam durch Licht, Reaktion und leicht absurden Ehrgeiz.", "date", "2-3 Std", ["Action", "Indoor", "Games"], "🎮"),
+      makeIdea("date-019", "Wohnzimmer-Pool mit Murmeln", "Baut aus Büchern, Murmeln und Stäbchen euren eigenen Billardtisch und nehmt die Regeln völlig ernst.", "date", "2-3 Std", ["DIY", "Spiel", "Chaos"], "🎱"),
+      makeIdea("date-025", "Eigene Cocktails erfinden", "Nehmt ein paar Zutaten, gebt euren Kreationen Namen und bewertet ehrlich nach Geschmack und Stil.", "date", "Abend", ["Mixen", "Kreativ", "Bar"], "🍸"),
+      makeIdea("date-027", "Postkarten an euch in 10 Jahren", "Schreibt euch Zukunftspost, steckt alles in Umschläge und versteckt sie an einem sicheren Ort.", "date", "Abend", ["Persönlich", "Schreiben", "Ritual"], "✉️"),
       makeIdea("date-029", "Sushi per YouTube lernen", "Besorgt die Basics, rollt euch durch ein Tutorial und esst am Ende die krummen Meisterwerke.", "date", "Abend", ["Kochen", "Lernen", "Food"], "🍣"),
-      makeIdea("date-030", "Brieffreund für einen Tag", "Hinterlasst euch über den Abend verteilt handgeschriebene Mini-Nachrichten in Jacken, Büchern oder Tassen.", "date", "Abend", ["Schreiben", "Überraschung", "Leise"], "✉️"),
-      makeIdea("date-031", "Buchseiten-Roulette", "Schlagt zufällig Seiten auf, lest laut vor und baut spontan Gespräche aus fremden Sätzen.", "date", "Abend", ["Bücher", "Ruhig", "Sprache"], "📖"),
-      makeIdea("date-033", "Super8- und VHS-Abend", "Schaut alte Familienaufnahmen und kommentiert gemeinsam Frisuren, Räume und vergangene Versionen des Lebens.", "date", "Abend", ["Erinnerungen", "Familie", "Nostalgie"], "📼"),
-      makeIdea("date-034", "Sonnenuntergang fotografieren", "Sucht euch einen erhöhten Punkt, wartet auf das beste Licht und macht aus dem Abend einen kleinen Fotospaziergang.", "date", "Abend", ["Foto", "Aussicht", "Goldene Stunde"], "🌇"),
-      makeIdea("date-035", "Selbst erfundene Stadtführung", "Jede Person erfindet unterwegs spontan historische oder völlig falsche Fakten und führt die andere durch die Stadt.", "date", "2-3 Std", ["Stadt", "Impro", "Humor"], "🗺️"),
-      makeIdea("date-036", "Architektur-Challenge", "Sucht beim Spazieren gezielt Bauhaus, Historismus und alles dazwischen und diskutiert eure Lieblingsfassaden.", "date", "2-3 Std", ["Architektur", "Stadt", "Beobachten"], "🏛️"),
-      makeIdea("date-037", "Origami-Battle", "Wählt drei Figuren, stellt einen Timer und entscheidet am Ende zwischen Eleganz und Katastrophe.", "date", "2-3 Std", ["Papier", "Kreativ", "Wettkampf"], "🦢"),
-      makeIdea("short-002", "Münchner Flohmärkte mit 10-Euro-Challenge", "Jede Person hat 10 Euro Budget, um dem anderen etwas Seltsames, Schönes oder Perfektes zu finden.", "short", "2-3 Std", ["Flohmarkt", "Budget", "Stadt"], "🧺"),
+      makeIdea("date-030", "Brieffreund für einen Tag", "Hinterlasst euch über den Abend verteilt handgeschriebene Mini-Nachrichten in Jacken, Büchern oder Tassen.", "date", "Abend", ["Schreiben", "Überraschung", "Leise"], "💌"),
+      makeIdea("date-031", "Buchseiten-Roulette", "Schlagt zufällig Seiten auf, lest laut vor und baut spontan Gespräche aus fremden Sätzen.", "date", "Abend", ["Bücher", "Ruhig", "Sprache"], "📚"),
+      makeIdea("date-033", "Super8- und VHS-Abend", "Schaut alte Familienaufnahmen und kommentiert gemeinsam Frisuren, Räume und vergangene Versionen des Lebens.", "date", "Abend", ["Erinnerungen", "Familie", "Nostalgie"], "📹"),
+      makeIdea("date-034", "Sonnenuntergang fotografieren", "Sucht euch einen erhöhten Punkt, wartet auf das beste Licht und macht aus dem Abend einen kleinen Fotospaziergang.", "date", "Abend", ["Foto", "Aussicht", "Goldene Stunde"], "🌅"),
+      makeIdea("date-035", "Selbst erfundene Stadtführung", "Jede Person erfindet unterwegs spontan historische oder völlig falsche Fakten und führt die andere durch die Stadt.", "date", "2-3 Std", ["Stadt", "Impro", "Humor"], "🏛️"),
+      makeIdea("date-036", "Architektur-Challenge", "Sucht beim Spazieren gezielt Bauhaus, Historismus und alles dazwischen und diskutiert eure Lieblingsfassaden.", "date", "2-3 Std", ["Architektur", "Stadt", "Beobachten"], "🏠"),
+      makeIdea("date-037", "Origami-Battle", "Wählt drei Figuren, stellt einen Timer und entscheidet am Ende zwischen Eleganz und Katastrophe.", "date", "2-3 Std", ["Papier", "Kreativ", "Wettkampf"], "📄"),
+      makeIdea("short-002", "Münchner Flohmärkte mit 10-Euro-Challenge", "Jede Person hat 10 Euro Budget, um dem anderen etwas Seltsames, Schönes oder Perfektes zu finden.", "short", "2-3 Std", ["Flohmarkt", "Budget", "Stadt"], "🏪"),
       makeIdea("short-005", "Restaurant-Dart auf München-Karte", "Werft blind einen Pfeil oder Marker und esst dort, wo das Schicksal heute Abend hinzeigt.", "short", "2-3 Std", ["Food", "Zufall", "Stadt"], "🎯"),
-      makeIdea("short-006", "Kochduell mit gleichen Zutaten", "Beide bekommen dieselben Basics und müssen daraus in kurzer Zeit etwas Eigenes bauen.", "short", "2-3 Std", ["Kochen", "Wettkampf", "Küche"], "🍳"),
-      makeIdea("short-010", "Outfit-Blind-Einkauf", "Stellt euch mit kleinem Budget gegenseitig ein Outfit zusammen und präsentiert es wie einen Laufsteg-Fail oder Volltreffer.", "short", "2-3 Std", ["Mode", "Challenge", "Budget"], "🧥"),
-      makeIdea("short-015", "GarageBand-Beat bauen", "Produziert in kurzer Zeit einen kleinen Beat und gebt ihm einen legendär übertriebenen Titel.", "short", "2-3 Std", ["Musik", "Digital", "Kreativ"], "🎛️"),
+      makeIdea("short-006", "Kochduell mit gleichen Zutaten", "Beide bekommen dieselben Basics und müssen daraus in kurzer Zeit etwas Eigenes bauen.", "short", "2-3 Std", ["Kochen", "Wettkampf", "Küche"], "👨‍🍳"),
+      makeIdea("short-010", "Outfit-Blind-Einkauf", "Stellt euch mit kleinem Budget gegenseitig ein Outfit zusammen und präsentiert es wie einen Laufsteg-Fail oder Volltreffer.", "short", "2-3 Std", ["Mode", "Challenge", "Budget"], "👕"),
+      makeIdea("short-015", "GarageBand-Beat bauen", "Produziert in kurzer Zeit einen kleinen Beat und gebt ihm einen legendär übertriebenen Titel.", "short", "2-3 Std", ["Musik", "Digital", "Kreativ"], "🎵"),
       makeIdea("short-018", "Boulderzentrum", "Ein sportlicher Block Zeit, bei dem man schnell merkt, welche Routen Theorie und welche Realität sind.", "short", "2-3 Std", ["Sport", "Indoor", "Mut"], "🧗"),
-      makeIdea("short-020", "Tagesreise zu einem Ort mit M", "Sucht euch spontan einen Ort mit M im Namen in erreichbarer Nähe und fahrt einfach los.", "short", "2-3 Std", ["Zufall", "Ausflug", "Buchstabe"], "🚌"),
+      makeIdea("short-020", "Tagesreise zu einem Ort mit M", "Sucht euch spontan einen Ort mit M im Namen in erreichbarer Nähe und fahrt einfach los.", "short", "2-3 Std", ["Zufall", "Ausflug", "Buchstabe"], "🗺️"),
       makeIdea("short-021", "Schach im Café", "Sucht ein ruhiges Café, spielt mehrere schnelle Partien und kommentiert sie übertrieben professionell.", "short", "2-3 Std", ["Café", "Spiel", "Ruhig"], "♟️"),
       makeIdea("short-024", "Café-Hopping mit Punktesystem", "Drei Stopps, drei Getränke, drei Bewertungen: Atmosphäre, Geschmack und Menschenbeobachtungsfaktor.", "short", "2-3 Std", ["Café", "Stadt", "Test"], "☕"),
-      makeIdea("short-025", "Street-Art-Safari", "Lauft gezielt durch Viertel, in denen Wände, Sticker und kleine Details zu einer offenen Galerie werden.", "short", "2-3 Std", ["Stadt", "Kunst", "Walking"], "🖌️"),
-      makeIdea("short-026", "Bookstore-Dating", "Trefft euch in einer Buchhandlung, verschwindet kurz in verschiedene Ecken und bringt euch dann gegenseitig Fundstücke mit.", "short", "2-3 Std", ["Bücher", "Leicht", "Date"], "🏬"),
-      makeIdea("short-027", "Spontaner Kuchen-Test", "Geht in zwei oder drei Cafés, teilt euch jeweils ein Stück und kürt die beste Theke des Tages.", "short", "2-3 Std", ["Food", "Süß", "Café"], "🍰"),
-      makeIdea("short-028", "Mini-Picknick auf unbekanntem Platz", "Kauft spontan Kleinigkeiten ein und sucht dann einen Ort, an dem ihr noch nie bewusst gesessen habt.", "short", "2-3 Std", ["Picknick", "Spontan", "Draußen"], "🧺"),
-      makeIdea("short-029", "Keramik bemalen", "Wenn ihr ein Studio findet: perfekt. Sonst improvisiert ihr mit günstigen Tassen und Farben zu Hause.", "short", "2-3 Std", ["Kreativ", "Handwerk", "Ruhig"], "🏺"),
-      makeIdea("short-030", "Ein Wort, ein Weg", "Definiert ein Thema wie Blau, Rund oder Laut und folgt nur Hinweisen, die dazu passen.", "short", "2-3 Std", ["Spiel", "Stadt", "Impro"], "🌀"),
-      makeIdea("short-031", "Parkbank-Interviews", "Überlegt euch zehn Fragen und beantwortet sie auf wechselnden Parkbänken immer wieder neu.", "short", "2-3 Std", ["Gespräch", "Ruhig", "Draußen"], "🪟"),
-      makeIdea("short-032", "Backen ohne Rezept", "Legt nur ein Grundziel fest und verhandelt den Rest spontan zwischen Chaos und Intuition.", "short", "2-3 Std", ["Backen", "Impro", "Küche"], "🧁"),
-      makeIdea("short-033", "Kiosk-Tasting", "Jede Person stellt aus Kiosk-Snacks und Getränken ein absurdes Menü für die andere zusammen.", "short", "2-3 Std", ["Snacks", "Test", "Spaß"], "🥤"),
-      makeIdea("short-034", "Wortsammler-Spaziergang", "Notiert unterwegs die besten Schilder, Wortfetzen und Graffiti-Sätze und baut am Ende ein Mini-Gedicht daraus.", "short", "2-3 Std", ["Worte", "Stadt", "Kreativ"], "📝"),
-      makeIdea("short-035", "Kräuter sammeln und Limo machen", "Kauft oder sammelt passende Kräuter und mischt eure eigene Sommer-Limo.", "short", "2-3 Std", ["DIY", "Getränk", "Sommer"], "🌿"),
-      makeIdea("short-036", "Record-Store Listening Session", "Hört in fremde Musik rein und versucht gegenseitig einen Song zu finden, der exakt zum anderen passt.", "short", "2-3 Std", ["Musik", "Entdecken", "Stadt"], "🎧"),
-      makeIdea("short-037", "Mini-Zine zusammenfalten", "Schreibt und zeichnet acht kleine Felder voll und faltet daraus euer eigenes absurdes Heft.", "short", "2-3 Std", ["Papier", "Design", "DIY"], "🗞️"),
-      makeIdea("short-038", "Bahnfahren ohne Ziel", "Steigt in eine Linie, bleibt sitzen bis euch ein Ort neugierig macht, und steigt dort einfach aus.", "short", "2-3 Std", ["ÖPNV", "Spontan", "Stadt"], "🚇"),
-      makeIdea("fullday-002", "Nachts mit dem Fahrrad durch leeres München", "Plant eine Route mit Aussichtspunkten und Snack-Stopps und erlebt die Stadt in einem ganz anderen Takt.", "fullday", "Ganzer Tag", ["München", "Fahrrad", "Nacht"], "🚲"),
-      makeIdea("fullday-003", "Strandbad Starnberg bis zum Sonnenuntergang", "Schwimmen, lesen, nichts tun und erst gehen, wenn das Licht wirklich kippt.", "fullday", "Ganzer Tag", ["See", "Sommer", "Entspannt"], "🏖️"),
-      makeIdea("fullday-004", "Große Flohmarkt-Tour", "Kombiniert mehrere Märkte, Frühstück unterwegs und eine Challenge, nur mit kuriosen Funden zurückzukommen.", "fullday", "Ganzer Tag", ["Flohmarkt", "Stadt", "Sammeln"], "🛍️"),
-      makeIdea("fullday-007", "Zugfahrt ins Ungeplante", "Nehmt eine Regionalbahn, steigt irgendwo aus, wo ihr noch nie wart, und baut den Tag von dort aus neu auf.", "fullday", "Ganzer Tag", ["Zug", "Spontan", "Ausflug"], "🚉"),
-      makeIdea("fullday-008", "Seen-Hopping", "Verbindet zwei oder drei Seen an einem Tag und sammelt pro Ort einen kurzen Moment oder ein kleines Foto.", "fullday", "Ganzer Tag", ["Wasser", "Sommer", "Roadtrip"], "🌊"),
-      makeIdea("fullday-014", "Markthallen-Tag", "Frühstück dort, wo es gut riecht, probiert Neues und lauft dann mit Essen, Ideen und zu viel Brot weiter.", "fullday", "Ganzer Tag", ["Food", "Markt", "Bummeln"], "🥖"),
-      makeIdea("fullday-016", "Museum plus spätes Essen", "Ein voller Kulturblock am Tag, dann etwas Gutes essen und alles in Ruhe zerpflücken.", "fullday", "Ganzer Tag", ["Kultur", "Food", "Stadt"], "🏺"),
-      makeIdea("fullday-019", "Kunst- und Skizzen-Tag", "Nehmt Papier mit und macht an verschiedenen Orten schnelle Skizzen, ohne euch von Qualität bremsen zu lassen.", "fullday", "Ganzer Tag", ["Zeichnen", "Unterwegs", "Kreativ"], "🖍️"),
-      makeIdea("fullday-021", "Isar von früh bis spät", "Startet mit Kaffee, folgt dem Wasser, schwimmt vielleicht und lasst den Tag irgendwo am Rand des Flusses auslaufen.", "fullday", "Ganzer Tag", ["Isar", "Sommer", "Laufen"], "🏞️"),
-      makeIdea("fullday-022", "Analoger Tag", "Lasst Handys fast komplett weg, nutzt nur Papier, Uhrzeitgefühl und spontane Absprachen.", "fullday", "Ganzer Tag", ["Digital Detox", "Langsam", "Experiment"], "📮"),
-      makeIdea("fullday-023", "Kulinarische Stadtkarte", "Setzt euch drei bis vier Essensstopps in verschiedenen Vierteln und verbindet sie zu einer Genusstour.", "fullday", "Ganzer Tag", ["Food", "Stadt", "Tour"], "🍜"),
-      makeIdea("fullday-024", "Tagestrip ins Umland per Regionalzug", "Sucht euch eine Linie, die schön klingt, und baut vor Ort euren Tag nur nach Stimmung zusammen.", "fullday", "Ganzer Tag", ["Zug", "Umland", "Spontan"], "🧳"),
-      makeIdea("fullday-025", "Botanischer Garten und Café", "Ein langsamer Tag zwischen Gewächshäusern, Notizen, Pflanzenformen und ruhigen Gesprächen.", "fullday", "Ganzer Tag", ["Natur", "Gewächshaus", "Ruhig"], "🌿"),
-      makeIdea("fullday-026", "Schwimmbad-Retro-Tag", "Packt Snacks, Karten und Sonnencreme ein und behandelt einen simplen Badetag wie einen kleinen Sommerurlaub.", "fullday", "Ganzer Tag", ["Sommer", "Wasser", "Leicht"], "🏊"),
-      makeIdea("fullday-027", "Radeln zu drei Eisdielen", "Verbindet Strecke und Genuss und vergleicht am Ende sehr ernsthaft Textur, Sorte und Gesamtwirkung.", "fullday", "Ganzer Tag", ["Fahrrad", "Eis", "Tour"], "🍦"),
-      makeIdea("fullday-029", "See, Karten, Sonnenuntergang", "Mehr braucht es oft nicht: hinfahren, baden, Karten spielen und möglichst spät zurück.", "fullday", "Ganzer Tag", ["See", "Spiele", "Entspannt"], "🃏"),
-      makeIdea("fullday-034", "Kunst- und Skizzen-Tag", "Nehmt Papier mit und macht an verschiedenen Orten schnelle Skizzen, ohne euch von Qualität bremsen zu lassen.", "fullday", "Ganzer Tag", ["Zeichnen", "Unterwegs", "Kreativ"], "🖍️"),
-      makeIdea("fullday-035", "Morgenmarkt bis Nachtfahrt", "Beginnt ganz früh, sammelt über den Tag Eindrücke und endet mit einer letzten ruhigen Fahrt zurück.", "fullday", "Ganzer Tag", ["Tagesbogen", "Stadt", "Lang"], "🌙"),
-      makeIdea("fullday-036", "Filmreifer Picknick-Dreh", "Dreht tagsüber kleine Szenen an schönen Orten und macht daraus abends einen Mini-Reisefilm.", "fullday", "Ganzer Tag", ["Film", "Picknick", "Kreativ"], "🎬"),
-      makeIdea("fullday-037", "Blauer-Tag", "Wählt die Farbe Blau als Leitmotiv und jagt ihr vom Morgen bis zum Abend durch Stadt, Kleidung, Essen und Himmel hinterher.", "fullday", "Ganzer Tag", ["Farbkonzept", "Foto", "Spiel"], "🔵"),
+      makeIdea("short-025", "Street-Art-Safari", "Lauft gezielt durch Viertel, in denen Wände, Sticker und kleine Details zu einer offenen Galerie werden.", "short", "2-3 Std", ["Stadt", "Kunst", "Walking"], "🎨"),
+      makeIdea("short-026", "Bookstore-Dating", "Trefft euch in einer Buchhandlung, verschwindet kurz in verschiedene Ecken und bringt euch dann gegenseitig Fundstücke mit.", "short", "2-3 Std", ["Bücher", "Leicht", "Date"], "🏛️"),
+      makeIdea("short-027", "Spontaner Kuchen-Test", "Geht in zwei oder drei Cafés, teilt euch jeweils ein Stück und kürt die beste Theke des Tages.", "short", "2-3 Std", ["Food", "Süß", "Café"], "🏛️"),
+      makeIdea("short-028", "Mini-Picknick auf unbekanntem Platz", "Kauft spontan Kleinigkeiten ein und sucht dann einen Ort, an dem ihr noch nie bewusst gesessen habt.", "short", "2-3 Std", ["Picknick", "Spontan", "Draußen"], "🏛️"),
+      makeIdea("short-029", "Keramik bemalen", "Wenn ihr ein Studio findet: perfekt. Sonst improvisiert ihr mit günstigen Tassen und Farben zu Hause.", "short", "2-3 Std", ["Kreativ", "Handwerk", "Ruhig"], "🏛️"),
+      makeIdea("short-030", "Ein Wort, ein Weg", "Definiert ein Thema wie Blau, Rund oder Laut und folgt nur Hinweisen, die dazu passen.", "short", "2-3 Std", ["Spiel", "Stadt", "Impro"], "🏛️"),
+      makeIdea("short-031", "Parkbank-Interviews", "Überlegt euch zehn Fragen und beantwortet sie auf wechselnden Parkbänken immer wieder neu.", "short", "2-3 Std", ["Gespräch", "Ruhig", "Draußen"], "🏛️"),
+      makeIdea("short-032", "Backen ohne Rezept", "Legt nur ein Grundziel fest und verhandelt den Rest spontan zwischen Chaos und Intuition.", "short", "2-3 Std", ["Backen", "Impro", "Küche"], "🏛️"),
+      makeIdea("short-033", "Kiosk-Tasting", "Jede Person stellt aus Kiosk-Snacks und Getränken ein absurdes Menü für die andere zusammen.", "short", "2-3 Std", ["Snacks", "Test", "Spaß"], "🏛️"),
+      makeIdea("short-034", "Wortsammler-Spaziergang", "Notiert unterwegs die besten Schilder, Wortfetzen und Graffiti-Sätze und baut am Ende ein Mini-Gedicht daraus.", "short", "2-3 Std", ["Worte", "Stadt", "Kreativ"], "🏛️"),
+      makeIdea("short-035", "Kräuter sammeln und Limo machen", "Kauft oder sammelt passende Kräuter und mischt eure eigene Sommer-Limo.", "short", "2-3 Std", ["DIY", "Getränk", "Sommer"], "🏛️"),
+      makeIdea("short-036", "Record-Store Listening Session", "Hört in fremde Musik rein und versucht gegenseitig einen Song zu finden, der exakt zum anderen passt.", "short", "2-3 Std", ["Musik", "Entdecken", "Stadt"], "🎭"),
+      makeIdea("short-037", "Mini-Zine zusammenfalten", "Schreibt und zeichnet acht kleine Felder voll und faltet daraus euer eigenes absurdes Heft.", "short", "2-3 Std", ["Papier", "Design", "DIY"], "🎭"),
+      makeIdea("short-038", "Bahnfahren ohne Ziel", "Steigt in eine Linie, bleibt sitzen bis euch ein Ort neugierig macht, und steigt dort einfach aus.", "short", "2-3 Std", ["ÖPNV", "Spontan", "Stadt"], "🎭"),
+      makeIdea("fullday-002", "Nachts mit dem Fahrrad durch leeres München", "Plant eine Route mit Aussichtspunkten und Snack-Stopps und erlebt die Stadt in einem ganz anderen Takt.", "fullday", "Ganzer Tag", ["München", "Fahrrad", "Nacht"], "🎭"),
+      makeIdea("fullday-003", "Strandbad Starnberg bis zum Sonnenuntergang", "Schwimmen, lesen, nichts tun und erst gehen, wenn das Licht wirklich kippt.", "fullday", "Ganzer Tag", ["See", "Sommer", "Entspannt"], "🎭"),
+      makeIdea("fullday-004", "Große Flohmarkt-Tour", "Kombiniert mehrere Märkte, Frühstück unterwegs und eine Challenge, nur mit kuriosen Funden zurückzukommen.", "fullday", "Ganzer Tag", ["Flohmarkt", "Stadt", "Sammeln"], "🎭"),
+      makeIdea("fullday-007", "Zugfahrt ins Ungeplante", "Nehmt eine Regionalbahn, steigt irgendwo aus, wo ihr noch nie wart, und baut den Tag von dort aus neu auf.", "fullday", "Ganzer Tag", ["Zug", "Spontan", "Ausflug"], "🎭"),
+      makeIdea("fullday-008", "Seen-Hopping", "Verbindet zwei oder drei Seen an einem Tag und sammelt pro Ort einen kurzen Moment oder ein kleines Foto.", "fullday", "Ganzer Tag", ["Wasser", "Sommer", "Roadtrip"], "🎭"),
+      makeIdea("fullday-014", "Markthallen-Tag", "Frühstück dort, wo es gut riecht, probiert Neues und lauft dann mit Essen, Ideen und zu viel Brot weiter.", "fullday", "Ganzer Tag", ["Food", "Markt", "Bummeln"], "🎭"),
+      makeIdea("fullday-016", "Museum plus spätes Essen", "Ein voller Kulturblock am Tag, dann etwas Gutes essen und alles in Ruhe zerpflücken.", "fullday", "Ganzer Tag", ["Kultur", "Food", "Stadt"], "🎭"),
+      makeIdea("fullday-019", "Kunst- und Skizzen-Tag", "Nehmt Papier mit und macht an verschiedenen Orten schnelle Skizzen, ohne euch von Qualität bremsen zu lassen.", "fullday", "Ganzer Tag", ["Zeichnen", "Unterwegs", "Kreativ"], "🎨"),
+      makeIdea("fullday-021", "Isar von früh bis spät", "Startet mit Kaffee, folgt dem Wasser, schwimmt vielleicht und lasst den Tag irgendwo am Rand des Flusses auslaufen.", "fullday", "Ganzer Tag", ["Isar", "Sommer", "Laufen"], "🎨"),
+      makeIdea("fullday-022", "Analoger Tag", "Lasst Handys fast komplett weg, nutzt nur Papier, Uhrzeitgefühl und spontane Absprachen.", "fullday", "Ganzer Tag", ["Digital Detox", "Langsam", "Experiment"], "🎨"),
+      makeIdea("fullday-023", "Kulinarische Stadtkarte", "Setzt euch drei bis vier Essensstopps in verschiedenen Vierteln und verbindet sie zu einer Genusstour.", "fullday", "Ganzer Tag", ["Food", "Stadt", "Tour"], "🎨"),
+      makeIdea("fullday-024", "Tagestrip ins Umland per Regionalzug", "Sucht euch eine Linie, die schön klingt, und baut vor Ort euren Tag nur nach Stimmung zusammen.", "fullday", "Ganzer Tag", ["Zug", "Umland", "Spontan"], "🎨"),
+      makeIdea("fullday-025", "Botanischer Garten und Café", "Ein langsamer Tag zwischen Gewächshäusern, Notizen, Pflanzenformen und ruhigen Gesprächen.", "fullday", "Ganzer Tag", ["Natur", "Gewächshaus", "Ruhig"], "🎨"),
+      makeIdea("fullday-026", "Schwimmbad-Retro-Tag", "Packt Snacks, Karten und Sonnencreme ein und behandelt einen simplen Badetag wie einen kleinen Sommerurlaub.", "fullday", "Ganzer Tag", ["Sommer", "Wasser", "Leicht"], "🎨"),
+      makeIdea("fullday-027", "Radeln zu drei Eisdielen", "Verbindet Strecke und Genuss und vergleicht am Ende sehr ernsthaft Textur, Sorte und Gesamtwirkung.", "fullday", "Ganzer Tag", ["Fahrrad", "Eis", "Tour"], "🎨"),
+      makeIdea("fullday-029", "See, Karten, Sonnenuntergang", "Mehr braucht es oft nicht: hinfahren, baden, Karten spielen und möglichst spät zurück.", "fullday", "Ganzer Tag", ["See", "Spiele", "Entspannt"], "🎨"),
+      makeIdea("fullday-034", "Kunst- und Skizzen-Tag", "Nehmt Papier mit und macht an verschiedenen Orten schnelle Skizzen, ohne euch von Qualität bremsen zu lassen.", "fullday", "Ganzer Tag", ["Zeichnen", "Unterwegs", "Kreativ"], "🎨"),
+      makeIdea("fullday-034", "Kunst- und Skizzen-Tag", "Nehmt Papier mit und macht an verschiedenen Orten schnelle Skizzen, ohne euch von Qualität bremsen zu lassen.", "fullday", "Ganzer Tag", ["Zeichnen", "Unterwegs", "Kreativ"], "🏕️"),
+      makeIdea("fullday-035", "Morgenmarkt bis Nachtfahrt", "Beginnt ganz früh, sammelt über den Tag Eindrücke und endet mit einer letzten ruhigen Fahrt zurück.", "fullday", "Ganzer Tag", ["Tagesbogen", "Stadt", "Lang"], "🏕️"),
+      makeIdea("fullday-036", "Filmreifer Picknick-Dreh", "Dreht tagsüber kleine Szenen an schönen Orten und macht daraus abends einen Mini-Reisefilm.", "fullday", "Ganzer Tag", ["Film", "Picknick", "Kreativ"], "🏕️"),
+      makeIdea("fullday-037", "Blauer-Tag", "Wählt die Farbe Blau als Leitmotiv und jagt ihr vom Morgen bis zum Abend durch Stadt, Kleidung, Essen und Himmel hinterher.", "fullday", "Ganzer Tag", ["Farbkonzept", "Foto", "Spiel"], "🏕️"),
       
       // User's custom ideas with correct emojis
-      makeIdea("custom-verschworungstheorie-abend-1776436101563", "Verschwörungstheorie-Abend", "jeder stellt eine Verschwörungstheorie vor mit Powerpoint", "short", "Flexibel", ["Eigene Idee", "2-3 Stunden", "Persönlich"], "🕵️", true),
-      makeIdea("custom-eisbade-nachsten-montag-1776436019800", "Eisbade nächsten Montag", "Gehe Eisbaden am Montag um 6:30 am Eisbach", "date", "Flexibel", ["Eigene Idee", "Date Night", "Persönlich"], "🧊", true),
+      makeIdea("custom-verschworungstheorie-abend-1776436101563", "Verschwörungstheorie-Abend", "jeder stellt eine Verschwörungstheorie vor mit Powerpoint", "short", "Flexibel", ["Eigene Idee", "2-3 Stunden", "Persönlich"], "", true),
+      makeIdea("custom-eisbade-nachsten-montag-1776436019800", "Eisbade nächsten Montag", "Gehe Eisbaden am Montag um 6:30 am Eisbach", "date", "Flexibel", ["Eigene Idee", "Date Night", "Persönlich"], "🥶", true),
       makeIdea("custom-clif-jumping-1776435963782", "Clif jumping", "fahre in die Berge und springe von paar Klippen", "date", "Flexibel", ["Eigene Idee", "Date Night", "Persönlich"], "🪂", true),
       makeIdea("custom-ice-sliding-1776435861865", "Ice sliding", "Gefriere krocks in einem Block Eis und fahre damit einen Hügel runter", "date", "Flexibel", ["Eigene Idee", "Date Night", "Persönlich"], "🧊", true),
-      makeIdea("custom-slip-and-slide-1776435781359", "Slip and Slide", "Baue eine Slip an Slide mit Sprung", "fullday", "Flexibel", ["Eigene Idee", "Ganzer Tag", "Persönlich"], "🏄", true)
+      makeIdea("custom-slip-and-slide-1776435781359", "Slip and Slide", "Baue eine Slip an Slide mit Sprung", "fullday", "Flexibel", ["Eigene Idee", "Ganzer Tag", "Persönlich"], "🛝", true)
     ];
 
     const state = {
@@ -2739,15 +2551,6 @@
       // Check authentication first
       checkAuthentication();
       
-      // Start live synchronization
-      liveSync.startAutoSync();
-      
-      // Load initial data if available from HTML injection
-      if (window.sparkInitialData) {
-        liveSync.loadDataFromJson(JSON.stringify(window.sparkInitialData));
-        console.log('Live-Sync: Initial data loaded from HTML injection');
-      }
-      
       // Add password form listener
       document.getElementById('passwordForm').addEventListener('submit', handlePasswordSubmit);
       
@@ -2798,10 +2601,6 @@
     }
 
     init();
-    
-    // AUTO-LIVE-SYNC DATA INJECTION POINT
-    // This will be automatically replaced by GitHub Actions with latest data
-    console.log('Live-Sync: Ready for data injection');
   </script>
 </body>
 </html>
