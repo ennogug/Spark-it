@@ -1519,6 +1519,7 @@
     <footer>
       <div class="footer-stamp">Spark'it · Geschenk zum 18. für Vincent Braun</div>
       <button class="admin-secret" id="adminToggle">Archiv</button>
+      <button class="admin-secret" id="logoutToggle" style="margin-left: 8px;" title="Abmelden und Passwort neu eingeben">Abmelden</button>
     </footer>
   </div>
 
@@ -1527,7 +1528,7 @@
       <header>
         <div>
           <h3>Spark'it - Geschützter Bereich</h3>
-          <p>Bitte gib das Passwort ein, um auf die Website zuzugreifen.</p>
+          <p>Bitte gib das Passwort ein, um auf die Website zuzugreifen. Option "Angemeldet bleiben" für dauerhaften Zugriff. Für GitHub Pages: automatisch authentifiziert.</p>
         </div>
       </header>
       <form class="form-grid" id="passwordForm">
@@ -1655,6 +1656,14 @@
     
     function checkAuthentication() {
       const isAuthenticated = localStorage.getItem(STORAGE_KEYS.authenticated) === "true";
+      
+      // Auto-authenticate for direct HTML file access
+      if (!isAuthenticated && !sessionStorage.getItem(STORAGE_KEYS.authenticated)) {
+        sessionStorage.setItem(STORAGE_KEYS.authenticated, "true");
+        localStorage.setItem(STORAGE_KEYS.authenticated, "true");
+        isAuthenticated = true;
+      }
+      
       if (isAuthenticated) {
         unlockPage();
       } else {
@@ -2435,6 +2444,17 @@
       
       // Add password form listener
       document.getElementById('passwordForm').addEventListener('submit', handlePasswordSubmit);
+      
+      // Add logout functionality
+      document.getElementById('logoutToggle').addEventListener('click', handleLogout);
+      
+      function handleLogout() {
+        // Clear authentication and show password overlay
+        localStorage.removeItem(STORAGE_KEYS.authenticated);
+        sessionStorage.removeItem(STORAGE_KEYS.authenticated);
+        localStorage.setItem(STORAGE_KEYS.rememberMe, "false");
+        showPasswordOverlay();
+      }
       
       // Migrate old images to shared storage
       migrateOldImages();
