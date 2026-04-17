@@ -874,6 +874,31 @@
       min-width: 150px;
     }
 
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+      background: var(--primary);
+      border-radius: 9px;
+      margin-left: 6px;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    #submitToGitHubButton {
+      position: relative;
+      font-weight: 500;
+    }
+
+    #submitToGitHubButton .badge {
+      background: rgba(122, 30, 51, 0.9);
+    }
+
     #adminContent {
       min-height: 0;
       display: grid;
@@ -1085,6 +1110,14 @@
         grid-template-columns: repeat(3, minmax(0, 1fr));
         grid-template-rows: none;
         padding-top: 0;
+        width: 100%;
+      }
+
+      /* Ziehmaschine-Modul auf Tablet: volle Breite der Spalte */
+      .side-panel .panel-card {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
       }
 
     }
@@ -1139,11 +1172,65 @@
 
       .action-stack {
         gap: 12px;
+        width: 100%;
       }
 
       /* Ensure proper spacing for touch targets */
       .panel-card {
         padding: 20px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+
+      .panel-card h3 {
+        font-size: 1.2rem;
+        text-align: center;
+        margin-bottom: 16px;
+      }
+
+      /* Ideengeneration Modul auf Mobile - volle Breite */
+      .side-panel .panel-card {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        transform: none;
+      }
+
+      .side-panel .panel-card .action-btn {
+        width: 100%;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Mobile: Logo -> Bild -> Text (untereinander) */
+      .hero {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "title"
+          "art"
+          "copy";
+        align-items: center;
+        text-align: center;
+        gap: 16px;
+      }
+
+      .hero h1 {
+        justify-self: center;
+      }
+
+      .hero-art {
+        justify-self: center;
+        margin: 0 auto;
+        transform: rotate(4deg) translateY(8px);
+        order: 2;
+      }
+
+      .hero-copy {
+        order: 3;
+        margin: 0 auto;
       }
     }
 
@@ -1227,6 +1314,11 @@
 
       .side-panel {
         grid-template-columns: 1fr;
+        width: 100%;
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+        gap: 16px;
       }
 
       .panel-card,
@@ -1640,6 +1732,10 @@
             <button class="icon-btn" type="button" id="exportAllDataButton">Alle Daten exportieren</button>
             <button class="icon-btn" type="button" id="importDataButton">Daten importieren</button>
             <input type="file" id="importDataFile" accept=".json" style="display: none;">
+            <button class="icon-btn primary" type="button" id="submitToGitHubButton" style="background: rgba(122, 30, 51, 0.1); border-color: rgba(122, 30, 51, 0.3);">
+              🔄 Änderungen einreichen
+              <span id="pendingChangesBadge" class="badge" style="display: none;">0</span>
+            </button>
           </div>
           <div class="muted" id="adminCount"></div>
         </div>
@@ -1891,8 +1987,251 @@
       }
     }
 
+    // GitHub Actions Submission Manager - Speichert Änderungen für GitHub Actions
+    class SubmissionManager {
+      constructor() {
+        this.STORAGE_KEY = 'spark_pending_submissions';
+        this.SUBMISSION_VERSION = 1;
+        this.maxImages = 10;
+        this.maxImageSize = 5 * 1024 * 1024; // 5MB
+      }
+
+      // Sammelt alle ausstehenden Änderungen
+      collectPendingChanges() {
+        const customIdeas = getCustomIdeas();
+        const editedIdeas = getEditedIdeas();
+        const deletedIdeas = getDeletedIdeas();
+        const sharedImages = getSharedImages();
+        
+        // Filtere nur Ideen, die seit dem letzten Commit hinzugefügt wurden
+        const lastSubmission = this.getLastSubmission();
+        const lastSubmissionTime = lastSubmission ? lastSubmission.timestamp : 0;
+        
+        const newIdeas = customIdeas.filter(idea => {
+          const ideaTime = new Date(idea.addedAt || 0).getTime();
+          return ideaTime > lastSubmissionTime;
+        });
+        
+        const newImages = sharedImages.filter(img => {
+          const imgTime = new Date(img.uploadedAt || 0).getTime();
+          return imgTime > lastSubmissionTime;
+        });
+
+        return {
+          newIdeas,
+          editedIdeas,
+          deletedIdeas,
+          newImages
+        };
+      }
+
+      // Prüft, ob es ausstehende Änderungen gibt
+      hasPendingChanges() {
+        const changes = this.collectPendingChanges();
+        return changes.newIdeas.length > 0 || 
+               Object.keys(changes.editedIdeas).length > 0 || 
+               changes.deletedIdeas.length > 0 ||
+               changes.newImages.length > 0;
+      }
+
+      // Anzahl der ausstehenden Änderungen
+      getPendingCount() {
+        const changes = this.collectPendingChanges();
+        return changes.newIdeas.length + 
+               Object.keys(changes.editedIdeas).length + 
+               changes.deletedIdeas.length +
+               changes.newImages.length;
+      }
+
+      // Erstellt Submission-Paket
+      createSubmission() {
+        const changes = this.collectPendingChanges();
+        
+        if (!this.hasPendingChanges()) {
+          return null;
+        }
+
+        // Validiere Bilder
+        const validatedImages = changes.newImages.filter(img => {
+          if (!img.data || img.data.length > this.maxImageSize) {
+            console.warn('Submission: Bild zu groß oder ungültig', img.filename);
+            return false;
+          }
+          return true;
+        }).slice(0, this.maxImages); // Max 10 Bilder pro Submission
+
+        const submission = {
+          version: this.SUBMISSION_VERSION,
+          timestamp: Date.now(),
+          submittedAt: new Date().toISOString(),
+          submittedBy: this.generateUserId(),
+          browserInfo: navigator.userAgent,
+          changes: {
+            newIdeas: changes.newIdeas,
+            editedIdeas: changes.editedIdeas,
+            deletedIdeas: changes.deletedIdeas,
+            newImages: validatedImages
+          }
+        };
+
+        return submission;
+      }
+
+      // Generiert eindeutige Nutzer-ID
+      generateUserId() {
+        let userId = localStorage.getItem('spark_user_id');
+        if (!userId) {
+          userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+          localStorage.setItem('spark_user_id', userId);
+        }
+        return userId;
+      }
+
+      // Speichert Submission im localStorage
+      saveSubmission(submission) {
+        const submissions = this.getAllSubmissions();
+        submissions.push(submission);
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(submissions));
+        
+        // Speichere Zeitstempel der letzten Submission
+        localStorage.setItem('spark_last_submission_time', submission.timestamp.toString());
+        
+        return submission;
+      }
+
+      // Holt alle gespeicherten Submissions
+      getAllSubmissions() {
+        try {
+          return JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '[]');
+        } catch {
+          return [];
+        }
+      }
+
+      // Holt letzte Submission
+      getLastSubmission() {
+        const submissions = this.getAllSubmissions();
+        return submissions.length > 0 ? submissions[submissions.length - 1] : null;
+      }
+
+      // Exportiert Submission als Download (für manuelles Hochladen)
+      exportSubmission() {
+        const submission = this.createSubmission();
+        if (!submission) {
+          alert('Keine ausstehenden Änderungen zum Exportieren.');
+          return null;
+        }
+
+        const dataStr = JSON.stringify(submission, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `spark-submission-${Date.now()}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Speichere diese Submission
+        this.saveSubmission(submission);
+        
+        return submission;
+      }
+
+      // Automatische Submission an GitHub Actions (simuliert)
+      async submitToGitHub() {
+        const submission = this.createSubmission();
+        if (!submission) {
+          return { success: false, message: 'Keine ausstehenden Änderungen' };
+        }
+
+        try {
+          // Versuche Repository Dispatch Event
+          // Hinweis: Erfordert GitHub Personal Access Token
+          const githubToken = localStorage.getItem('spark_github_token');
+          
+          if (!githubToken) {
+            // Fallback: Export als Datei
+            this.exportSubmission();
+            return { 
+              success: true, 
+              method: 'export',
+              message: 'Änderungen als Datei exportiert. Bitte im Repository hochladen.' 
+            };
+          }
+
+          // Echte GitHub API Anfrage
+          const response = await fetch('https://api.github.com/repos/YOUR_USERNAME/YOUR_REPO/dispatches', {
+            method: 'POST',
+            headers: {
+              'Authorization': `token ${githubToken}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              event_type: 'user-submission',
+              client_payload: submission
+            })
+          });
+
+          if (response.ok) {
+            this.saveSubmission(submission);
+            return { 
+              success: true, 
+              method: 'github',
+              message: 'Änderungen erfolgreich an GitHub gesendet!' 
+            };
+          } else {
+            throw new Error(`GitHub API Fehler: ${response.status}`);
+          }
+          
+        } catch (error) {
+          console.error('Submission Fehler:', error);
+          // Fallback: Export als Datei
+          this.exportSubmission();
+          return { 
+            success: true, 
+            method: 'export',
+            message: 'Automatische Übertragung fehlgeschlagen. Datei wurde exportiert.' 
+          };
+        }
+      }
+
+      // Löscht alle Submissions
+      clearSubmissions() {
+        localStorage.removeItem(this.STORAGE_KEY);
+        localStorage.removeItem('spark_last_submission_time');
+      }
+
+      // Zeigt Status-Informationen
+      getStatus() {
+        return {
+          pendingCount: this.getPendingCount(),
+          hasPendingChanges: this.hasPendingChanges(),
+          totalSubmissions: this.getAllSubmissions().length,
+          lastSubmission: this.getLastSubmission()
+        };
+      }
+    }
+
+    // Submission Manager initialisieren
+    const submissionManager = new SubmissionManager();
+
     // Live-Synchronisation initialisieren
     const liveSync = new AutoLiveSync();
+
+    // Badge-Aktualisierungsfunktion
+    function updatePendingChangesBadge() {
+      if (!elements.pendingChangesBadge) return;
+      
+      const count = submissionManager.getPendingCount();
+      if (count > 0) {
+        elements.pendingChangesBadge.textContent = count;
+        elements.pendingChangesBadge.style.display = 'inline-flex';
+      } else {
+        elements.pendingChangesBadge.style.display = 'none';
+      }
+    }
 
     // Password protection
     const CORRECT_PASSWORD = "20Vinc08:)";
@@ -2080,6 +2419,8 @@
       exportButton: document.getElementById("exportButton"),
       exportAllDataButton: document.getElementById("exportAllDataButton"),
       importDataButton: document.getElementById("importDataButton"),
+      submitToGitHubButton: document.getElementById("submitToGitHubButton"),
+      pendingChangesBadge: document.getElementById("pendingChangesBadge"),
       adminToggle: document.getElementById("adminToggle"),
       logoButton: document.getElementById("logoButton")
     };
@@ -2524,6 +2865,38 @@
       });
       document.getElementById('importDataFile').addEventListener("change", importData);
 
+      // Submit to GitHub Button
+      if (elements.submitToGitHubButton) {
+        elements.submitToGitHubButton.addEventListener("click", async () => {
+          const result = await submissionManager.submitToGitHub();
+          if (result.success) {
+            alert(result.message);
+            updatePendingChangesBadge();
+          } else {
+            alert('Fehler: ' + result.message);
+          }
+        });
+      }
+
+      // Badge-Aktualisierung bei Datenänderungen
+      const originalAddCustomIdea = addCustomIdea;
+      addCustomIdea = function(idea) {
+        originalAddCustomIdea(idea);
+        updatePendingChangesBadge();
+      };
+
+      const originalSaveAdminEdit = saveAdminEdit;
+      saveAdminEdit = function(ideaId, patch) {
+        originalSaveAdminEdit(ideaId, patch);
+        updatePendingChangesBadge();
+      };
+
+      const originalDeleteIdea = deleteIdea;
+      deleteIdea = function(ideaId) {
+        originalDeleteIdea(ideaId);
+        updatePendingChangesBadge();
+      };
+
       elements.adminAddForm.addEventListener("submit", (event) => {
         event.preventDefault();
         const formData = new FormData(elements.adminAddForm);
@@ -2809,6 +3182,7 @@
       resetCard();
       renderAdmin();
       updateStats();
+      updatePendingChangesBadge();
       initImageUpload();
       if (state.easterEggEnabled) {
         document.body.style.filter = "saturate(1.08) hue-rotate(-8deg)";
