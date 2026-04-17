@@ -45,10 +45,10 @@
       overflow-x: hidden;
       overflow-y: auto;
       background: var(--background);
-      background-image: url("../.cursor/projects/Users-ennoguggenbichler-Spark/assets/watercolor_paper_texture-86c3f77f-98e1-4ca8-87c7-4e4fc4d10215.png");
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
+      background-image: url("watercolor paper texture.jpg");
+      background-size: auto;
+      background-position: top left;
+      background-repeat: repeat;
       background-attachment: fixed;
       color: var(--dark);
       font-family: "Times New Roman", Times, serif;
@@ -724,7 +724,12 @@
       display: none;
       place-items: center;
       padding: 20px;
-      background: rgba(15, 31, 61, 0.34);
+      background: 
+        url("watercolor paper texture.jpg"),
+        rgba(15, 31, 61, 0.34);
+      background-size: auto;
+      background-position: top left;
+      background-repeat: repeat;
       backdrop-filter: blur(10px);
       z-index: 20;
     }
@@ -971,6 +976,24 @@
       display: none !important;
     }
 
+    #passwordFeedback {
+      display: none;
+    }
+
+    #passwordFeedback.show {
+      display: block;
+    }
+
+    .page-content {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .page-unlocked .page-content {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
     @keyframes fadeUp {
       to {
         opacity: 1;
@@ -1077,6 +1100,40 @@
         height: auto;
         overflow: visible;
         padding: clamp(8px, 2vw, 16px);
+      }
+
+      /* Optimize background for mobile */
+      html,
+      body {
+        background-attachment: scroll;
+      }
+
+      .overlay {
+        background-attachment: scroll;
+      }
+    }
+
+    /* High-resolution display optimization */
+    @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+      html,
+      body {
+        background-attachment: scroll;
+      }
+
+      .overlay {
+        background-attachment: scroll;
+      }
+    }
+
+    /* Ultra-wide screen optimization */
+    @media (min-width: 1920px) {
+      html,
+      body {
+        background-attachment: fixed;
+      }
+
+      .overlay {
+        background-attachment: scroll;
       }
 
       .hero {
@@ -1349,7 +1406,7 @@
   </style>
 </head>
 <body>
-  <div class="page">
+  <div class="page page-content">
     <section class="hero">
       <h1 id="logoButton" tabindex="0" role="button" aria-label="Spark'it Logo">Spark'it</h1>
       <div class="hero-art" aria-hidden="true">
@@ -1411,8 +1468,8 @@
 
     <section class="upload-section">
       <div class="upload-card">
-        <h3>Deine Erinnerungen</h3>
-        <p>Lade Bilder von deinen durchgeführten Aktivitäten hoch und erstelle deine persönliche Galerie.</p>
+        <h3>Gemeinsame Erinnerungen</h3>
+        <p>Lade Bilder von durchgeführten Aktivitäten hoch. Alle Bilder sind für alle authentifizierten Benutzer sichtbar und bleiben dauerhaft gespeichert.</p>
         <div class="upload-area" id="uploadArea">
           <input type="file" id="imageUpload" accept="image/*" multiple hidden>
           <div class="upload-prompt" id="uploadPrompt">
@@ -1463,6 +1520,27 @@
       <div class="footer-stamp">Spark'it · Geschenk zum 18. für Vincent Braun</div>
       <button class="admin-secret" id="adminToggle">Archiv</button>
     </footer>
+  </div>
+
+  <div class="overlay" id="passwordOverlay" style="display: grid;">
+    <div class="modal-card">
+      <header>
+        <div>
+          <h3>Spark'it - Geschützter Bereich</h3>
+          <p>Bitte gib das Passwort ein, um auf die Website zuzugreifen.</p>
+        </div>
+      </header>
+      <form class="form-grid" id="passwordForm">
+        <label>
+          <span>Passwort</span>
+          <input type="password" id="passwordInput" placeholder="Passwort eingeben" required>
+        </label>
+        <div class="modal-actions">
+          <button class="action-btn primary" type="submit">Öffnen</button>
+        </div>
+        <div class="muted" id="passwordFeedback" style="text-align: center; margin-top: 12px;">Falsches Passwort. Bitte versuche es erneut.</div>
+      </form>
+    </div>
   </div>
 
   <div class="overlay" id="ideaModal" aria-hidden="true">
@@ -1567,8 +1645,53 @@
       editedIdeas: "spark.editedIdeas",
       history: "spark.history",
       adminUnlocked: "spark.adminUnlocked",
-      easterEgg: "spark.easterEgg"
+      easterEgg: "spark.easterEgg",
+      authenticated: "spark.authenticated",
+      sharedImages: "spark.sharedImages"
     };
+
+    // Password protection
+    const CORRECT_PASSWORD = "20Vinc08:)";
+    
+    function checkAuthentication() {
+      const isAuthenticated = localStorage.getItem(STORAGE_KEYS.authenticated) === "true";
+      if (isAuthenticated) {
+        unlockPage();
+      } else {
+        showPasswordOverlay();
+      }
+    }
+    
+    function showPasswordOverlay() {
+      const overlay = document.getElementById('passwordOverlay');
+      overlay.style.display = 'grid';
+      document.body.classList.remove('page-unlocked');
+    }
+    
+    function unlockPage() {
+      const overlay = document.getElementById('passwordOverlay');
+      overlay.style.display = 'none';
+      document.body.classList.add('page-unlocked');
+      localStorage.setItem(STORAGE_KEYS.authenticated, "true");
+    }
+    
+    function handlePasswordSubmit(e) {
+      e.preventDefault();
+      const passwordInput = document.getElementById('passwordInput');
+      const feedback = document.getElementById('passwordFeedback');
+      
+      if (passwordInput.value === CORRECT_PASSWORD) {
+        unlockPage();
+        passwordInput.value = '';
+        feedback.classList.remove('show');
+      } else {
+        feedback.classList.add('show');
+        passwordInput.value = '';
+        setTimeout(() => {
+          feedback.classList.remove('show');
+        }, 3000);
+      }
+    }
 
     const categories = [
       { id: "date", label: "Date Night", icon: "🕯️", description: "Perfekt für zu zweit", durationHint: "Abend" },
@@ -2156,42 +2279,63 @@
     }
 
     // Image Upload and Gallery Functions
-    STORAGE_KEYS.uploadedImages = 'spark-uploaded-images';
-
-    function getUploadedImages() {
+    function getSharedImages() {
       try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEYS.uploadedImages) || '[]');
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.sharedImages) || '[]');
       } catch {
         return [];
       }
     }
 
-    function saveUploadedImages(images) {
-      localStorage.setItem(STORAGE_KEYS.uploadedImages, JSON.stringify(images));
+    function saveSharedImages(images) {
+      localStorage.setItem(STORAGE_KEYS.sharedImages, JSON.stringify(images));
     }
 
     function addImageToGallery(imageData, filename) {
-      const images = getUploadedImages();
+      const images = getSharedImages();
       const newImage = {
         id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
         data: imageData,
         filename: filename,
-        uploadedAt: new Date().toISOString()
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: 'User' // Could be enhanced with user identification
       };
       images.unshift(newImage);
-      saveUploadedImages(images);
+      saveSharedImages(images);
       renderGallery();
     }
 
     function deleteImageFromGallery(imageId) {
-      const images = getUploadedImages().filter(img => img.id !== imageId);
-      saveUploadedImages(images);
+      const images = getSharedImages().filter(img => img.id !== imageId);
+      saveSharedImages(images);
       renderGallery();
+    }
+
+    function migrateOldImages() {
+      // Check if there are old images to migrate
+      const oldImagesKey = 'spark-uploaded-images';
+      const oldImages = localStorage.getItem(oldImagesKey);
+      
+      if (oldImages && getSharedImages().length === 0) {
+        try {
+          const parsedOldImages = JSON.parse(oldImages);
+          // Add uploadedBy field to old images
+          const migratedImages = parsedOldImages.map(img => ({
+            ...img,
+            uploadedBy: 'Legacy User'
+          }));
+          saveSharedImages(migratedImages);
+          // Clear old storage
+          localStorage.removeItem(oldImagesKey);
+        } catch (e) {
+          console.warn('Failed to migrate old images:', e);
+        }
+      }
     }
 
     function renderGallery() {
       const galleryGrid = document.getElementById('galleryGrid');
-      const images = getUploadedImages();
+      const images = getSharedImages();
       
       if (images.length === 0) {
         galleryGrid.innerHTML = '<div class="empty-gallery">Noch keine Bilder hochgeladen. Lade deine Erinnerungen hoch!</div>';
@@ -2200,8 +2344,9 @@
 
       galleryGrid.innerHTML = images.map((image, index) => {
         const rotation = (index % 3 - 1) * 6; // -6, 0, or 6 degrees rotation
+        const uploadDate = new Date(image.uploadedAt).toLocaleDateString('de-DE');
         return `
-          <div class="gallery-item" style="--rotation: ${rotation}">
+          <div class="gallery-item" style="--rotation: ${rotation}" title="Hochgeladen von ${image.uploadedBy || 'User'} am ${uploadDate}">
             <img src="${image.data}" alt="${image.filename}" loading="lazy">
             <button class="delete-btn" data-image-id="${image.id}" aria-label="Bild löschen">×</button>
           </div>
@@ -2285,6 +2430,15 @@
 
     // Update init function
     function init() {
+      // Check authentication first
+      checkAuthentication();
+      
+      // Add password form listener
+      document.getElementById('passwordForm').addEventListener('submit', handlePasswordSubmit);
+      
+      // Migrate old images to shared storage
+      migrateOldImages();
+      
       seedSelects();
       renderCategoryButtons();
       bindEvents();
