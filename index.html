@@ -1111,6 +1111,40 @@
       .overlay {
         background-attachment: scroll;
       }
+
+      /* Mobile button optimizations */
+      .action-btn {
+        min-height: 48px;
+        padding: 12px 24px;
+        font-size: 16px;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: rgba(143, 15, 32, 0.1);
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+      }
+
+      .action-btn:active {
+        transform: scale(0.98);
+        transition: transform 0.1s ease;
+      }
+
+      .action-btn.primary {
+        min-height: 56px;
+        font-size: 18px;
+        font-weight: 600;
+        padding: 14px 28px;
+      }
+
+      .action-stack {
+        gap: 12px;
+      }
+
+      /* Ensure proper spacing for touch targets */
+      .panel-card {
+        padding: 20px;
+      }
     }
 
     /* High-resolution display optimization */
@@ -1646,7 +1680,8 @@
       adminUnlocked: "spark.adminUnlocked",
       easterEgg: "spark.easterEgg",
       authenticated: "spark.authenticated",
-      sharedImages: "spark.sharedImages"
+      sharedImages: "spark.sharedImages",
+      sharedIdeas: "spark.sharedIdeas"
     };
 
     // Password protection
@@ -1654,13 +1689,6 @@
     
     function checkAuthentication() {
       const isAuthenticated = localStorage.getItem(STORAGE_KEYS.authenticated) === "true";
-      
-      // Auto-authenticate for direct HTML file access
-      if (!isAuthenticated && !sessionStorage.getItem(STORAGE_KEYS.authenticated)) {
-        sessionStorage.setItem(STORAGE_KEYS.authenticated, "true");
-        localStorage.setItem(STORAGE_KEYS.authenticated, "true");
-        isAuthenticated = true;
-      }
       
       if (isAuthenticated) {
         unlockPage();
@@ -1913,15 +1941,16 @@
       const edited = getEditedIdeas();
       const deleted = new Set(getDeletedIdeas());
       const custom = getCustomIdeas();
+      const shared = getSharedIdeas();
       const mergedOriginal = originalIdeas
         .filter((idea) => !deleted.has(idea.id))
         .map((idea) => ({ ...idea, ...(edited[idea.id] || {}) }));
-
+      
       const mergedCustom = custom
         .filter((idea) => !deleted.has(idea.id))
         .map((idea) => ({ ...idea, ...(edited[idea.id] || {}) }));
 
-      return [...mergedOriginal, ...mergedCustom];
+      return [...mergedOriginal, ...mergedCustom, ...shared];
     }
 
     function getIdeasByCategory(categoryId) {
@@ -2047,27 +2076,35 @@
         .join("");
     }
 
-    function addCustomIdea(payload) {
-      const customIdeas = getCustomIdeas();
-      const idBase = "custom-" + slugify(payload.title || "idee");
-      const id = idBase + "-" + Date.now();
-      customIdeas.unshift({
-        id,
-        title: payload.title,
-        description: payload.description,
-        category: payload.category,
-        duration: "Flexibel",
-        tags: ["Eigene Idee", categoryLabel(payload.category), "Persönlich"],
-        emoji: payload.emoji,
-        isUserAdded: true
-      });
-      writeStorage(STORAGE_KEYS.customIdeas, customIdeas);
+    function addCustomIdea(idea) {
+      const ideas = getSharedIdeas();
+      const newIdea = {
+        ...idea,
+        id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+        isUserAdded: true,
+        addedAt: new Date().toISOString()
+      };
+      ideas.unshift(newIdea);
+      saveSharedIdeas(ideas);
+      renderAdmin();
+      updateStats();
     }
 
     function saveAdminEdit(ideaId, patch) {
       const edited = getEditedIdeas();
       edited[ideaId] = { ...(edited[ideaId] || {}), ...patch };
       writeStorage(STORAGE_KEYS.editedIdeas, edited);
+      
+      // Also save to shared ideas for multi-user compatibility
+      const sharedIdeas = getSharedIdeas();
+      const existingSharedIdea = sharedIdeas.find(idea => idea.id === ideaId);
+      if (existingSharedIdea) {
+        const updatedSharedIdea = { ...existingSharedIdea, ...patch };
+        const updatedSharedIdeas = sharedIdeas.map(idea => 
+          idea.id === ideaId ? updatedSharedIdea : idea
+        );
+        saveSharedIdeas(updatedSharedIdeas);
+      }
     }
 
     function deleteIdea(ideaId) {
@@ -2076,6 +2113,11 @@
         deleted.push(ideaId);
         writeStorage(STORAGE_KEYS.deletedIdeas, deleted);
       }
+      
+      // Also remove from shared ideas for multi-user compatibility
+      const sharedIdeas = getSharedIdeas();
+      const updatedSharedIdeas = sharedIdeas.filter(idea => idea.id !== ideaId);
+      saveSharedIdeas(updatedSharedIdeas);
     }
 
     function renderAdmin() {
@@ -2296,6 +2338,18 @@
       localStorage.setItem(STORAGE_KEYS.sharedImages, JSON.stringify(images));
     }
 
+    function getSharedIdeas() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.sharedIdeas) || '[]');
+      } catch {
+        return [];
+      }
+    }
+
+    function saveSharedIdeas(ideas) {
+      localStorage.setItem(STORAGE_KEYS.sharedIdeas, JSON.stringify(ideas));
+    }
+
     function addImageToGallery(imageData, filename) {
       const images = getSharedImages();
       const newImage = {
@@ -2443,6 +2497,26 @@
       
       // Add logout functionality
       document.getElementById('logoutToggle').addEventListener('click', handleLogout);
+      
+      // Add mobile touch optimizations for Spark'it button
+      const generateButton = document.getElementById('generateButton');
+      if (generateButton) {
+        // Prevent double-tap zoom on mobile
+        generateButton.addEventListener('touchstart', function(e) {
+          e.target.style.transform = 'scale(0.98)';
+        });
+        
+        generateButton.addEventListener('touchend', function(e) {
+          setTimeout(() => {
+            e.target.style.transform = 'scale(1)';
+          }, 100);
+        });
+        
+        // Ensure proper touch feedback
+        generateButton.addEventListener('touchcancel', function(e) {
+          e.target.style.transform = 'scale(1)';
+        });
+      }
       
       function handleLogout() {
         // Clear authentication and show password overlay
