@@ -137,13 +137,14 @@ class SparkDatabase {
       const response = await Promise.race([
         fetch(this.getApiUrl(), {
           method: 'GET',
+          mode: 'cors',
           headers: {
             'X-Master-Key': this.config.API_KEY,
             'X-Bin-Meta': 'false'
           }
         }),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Fetch timeout')), 5000)
+          setTimeout(() => reject(new Error('Fetch timeout')), 10000)
         )
       ]);
 
@@ -181,10 +182,11 @@ class SparkDatabase {
       this.data.version = (this.data.version || 0) + 1;
       this.data.timestamp = Date.now();
 
-      // Save with timeout
+      // Save with extended timeout for larger data
       const response = await Promise.race([
         fetch(this.getApiUrl(), {
           method: 'PUT',
+          mode: 'cors',
           headers: {
             'Content-Type': 'application/json',
             'X-Master-Key': this.config.API_KEY
@@ -192,7 +194,7 @@ class SparkDatabase {
           body: JSON.stringify(this.data)
         }),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Save timeout')), 8000)
+          setTimeout(() => reject(new Error('Save timeout')), 15000)
         )
       ]);
 
@@ -205,6 +207,9 @@ class SparkDatabase {
       console.log('DB: Saved to remote, version', this.data.version);
       return true;
     } catch (error) {
+      if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
+        console.warn('DB: CORS or network error - this is normal when testing locally. On GitHub Pages this should work.');
+      }
       console.warn('DB: Remote save failed, data in localStorage:', error.message);
       return false;
     }
