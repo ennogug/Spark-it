@@ -70,8 +70,8 @@ class SparkDatabase {
       // Try to load from cache first
       const cached = this.loadFromCache();
       if (cached) {
-        this.data = cached;
-        console.log('DB: Loaded from cache, version', cached.version);
+        this.data = this.validateData(cached);
+        console.log('DB: Loaded from cache, version', this.data.version);
       } else {
         this.data = { ...DEFAULT_DATA };
       }
@@ -123,6 +123,36 @@ class SparkDatabase {
    */
   getApiUrl() {
     return `${this.config.BASE_URL}/${this.config.BIN_ID}`;
+  }
+
+  /**
+   * Validate and fix data structure
+   */
+  validateData(data) {
+    const validated = { ...DEFAULT_DATA };
+    if (!data) return validated;
+
+    // Copy version and timestamp if valid
+    if (data.version) validated.version = data.version;
+    if (data.timestamp) validated.timestamp = data.timestamp;
+
+    // Ensure arrays exist
+    validated.sharedIdeas = Array.isArray(data.sharedIdeas) ? data.sharedIdeas : [];
+    validated.sharedImages = Array.isArray(data.sharedImages) ? data.sharedImages : [];
+    validated.customIdeas = Array.isArray(data.customIdeas) ? data.customIdeas : [];
+    validated.deletedIdeas = Array.isArray(data.deletedIdeas) ? data.deletedIdeas : [];
+
+    // Ensure editedIdeas is an object
+    validated.editedIdeas = (data.editedIdeas && typeof data.editedIdeas === 'object') ? data.editedIdeas : {};
+
+    // Ensure history has all categories
+    validated.history = {
+      date: Array.isArray(data.history?.date) ? data.history.date : [],
+      short: Array.isArray(data.history?.short) ? data.history.short : [],
+      fullday: Array.isArray(data.history?.fullday) ? data.history.fullday : []
+    };
+
+    return validated;
   }
 
   /**
@@ -199,6 +229,9 @@ class SparkDatabase {
       ]);
 
       if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error('HTTP 403 - API Key oder Bin Einstellungen falsch. Prüfe: 1) API Key kopiert aus Settings, 2) Bin ist auf Public, 3) Bin ID stimmt');
+        }
         throw new Error(`HTTP ${response.status}`);
       }
 
@@ -209,6 +242,12 @@ class SparkDatabase {
     } catch (error) {
       if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
         console.warn('DB: CORS or network error - this is normal when testing locally. On GitHub Pages this should work.');
+      } else if (error.message.includes('403')) {
+        console.error('DB: AUTHORIZATION ERROR - Check your JSONBin.io settings:');
+        console.error('  1. Go to https://jsonbin.io/app/settings');
+        console.error('  2. Copy X-Master-Key (starts with $2a$10$...)');
+        console.error('  3. Make sure your Bin is PUBLIC (unlock icon)');
+        console.error('  4. Verify BIN_ID matches your Bin URL');
       }
       console.warn('DB: Remote save failed, data in localStorage:', error.message);
       return false;
@@ -220,18 +259,21 @@ class SparkDatabase {
    */
   async syncFromRemote() {
     const remote = await this.fetchFromRemote();
-    
+
     if (!remote) {
       console.log('DB: No remote data, using local');
       return;
     }
 
+    // Validate remote data before using it
+    const validatedRemote = this.validateData(remote);
+
     const localVersion = this.data?.version || 0;
-    const remoteVersion = remote.version || 0;
+    const remoteVersion = validatedRemote.version || 0;
 
     if (remoteVersion > localVersion) {
       console.log('DB: Remote is newer (', remoteVersion, '>', localVersion, '), updating local');
-      this.data = remote;
+      this.data = validatedRemote;
       this.saveToCache();
     } else if (remoteVersion < localVersion) {
       console.log('DB: Local is newer (', localVersion, '>', remoteVersion, '), pushing to remote');
@@ -254,7 +296,7 @@ class SparkDatabase {
   async forcePull() {
     const remote = await this.fetchFromRemote();
     if (remote) {
-      this.data = remote;
+      this.data = this.validateData(remote);
       this.saveToCache();
       return true;
     }
@@ -347,7 +389,16 @@ class SparkDatabase {
   }
 
   getHistory() {
-    return this.data?.history || { date: [], short: [], fullday: [] };
+    const defaultHistory = { date: [], short: [], fullday: [] };
+    if (!this.data || !this.data.history) {
+      return defaultHistory;
+    }
+    // Ensure all category arrays exist
+    return {
+      date: this.data.history.date || [],
+      short: this.data.history.short || [],
+      fullday: this.data.history.fullday || []
+    };
   }
 
   // Data Modification Methods

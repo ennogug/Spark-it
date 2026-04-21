@@ -2287,37 +2287,69 @@
     }
 
     async function pickIdea(categoryId) {
-      const ideas = await getIdeasByCategory(categoryId);
-      if (!ideas.length) {
+      try {
+        // Ensure database is ready before proceeding
+        await ensureDBReady();
+
+        if (!categoryId) {
+          console.warn('pickIdea: No category selected');
+          return null;
+        }
+
+        const ideas = await getIdeasByCategory(categoryId);
+        if (!ideas.length) {
+          console.warn('pickIdea: No ideas found for category', categoryId);
+          return null;
+        }
+
+        let history;
+        try {
+          history = await getHistory();
+        } catch (e) {
+          console.warn('pickIdea: Could not load history, using empty history', e);
+          history = { date: [], short: [], fullday: [] };
+        }
+
+        const seenIds = new Set(history[categoryId] || []);
+        let available = ideas.filter((idea) => !seenIds.has(idea.id));
+
+        if (!available.length) {
+          history[categoryId] = [];
+          await saveHistory(history);
+          available = [...ideas];
+        }
+
+        const pool = available.filter((idea) => idea.id !== state.currentIdeaId);
+        const candidates = pool.length ? pool : available;
+        const nextIdea = candidates[Math.floor(Math.random() * candidates.length)];
+        history[categoryId] = [...(history[categoryId] || []), nextIdea.id];
+        await saveHistory(history);
+
+        return nextIdea;
+      } catch (error) {
+        console.error('pickIdea error:', error);
         return null;
       }
-
-      const history = await getHistory();
-      const seenIds = new Set(history[categoryId] || []);
-      let available = ideas.filter((idea) => !seenIds.has(idea.id));
-
-      if (!available.length) {
-        history[categoryId] = [];
-        await saveHistory(history);
-        available = [...ideas];
-      }
-
-      const pool = available.filter((idea) => idea.id !== state.currentIdeaId);
-      const candidates = pool.length ? pool : available;
-      const nextIdea = candidates[Math.floor(Math.random() * candidates.length)];
-      history[categoryId] = [...(history[categoryId] || []), nextIdea.id];
-      await saveHistory(history);
-
-      return nextIdea;
     }
 
     async function generateIdea() {
-      const nextIdea = await pickIdea(state.activeCategory);
-      if (!nextIdea) {
-        return;
+      try {
+        // Check if database is ready
+        await ensureDBReady();
+
+        const nextIdea = await pickIdea(state.activeCategory);
+        if (!nextIdea) {
+          elements.cardDescription.textContent = "Keine Ideen verfügbar. Bitte wähle eine Kategorie oder prüfe die Datenbank-Verbindung.";
+          console.warn('generateIdea: No ideas available for category', state.activeCategory);
+          return;
+        }
+        animateCard(nextIdea);
+        await updateStats();
+      } catch (error) {
+        console.error('generateIdea error:', error);
+        elements.cardDescription.textContent = "Fehler beim Laden der Idee. Datenbank möglicherweise nicht bereit.";
+        elements.cardSource.textContent = "Fehler: " + error.message;
       }
-      animateCard(nextIdea);
-      await updateStats();
     }
 
     async function resetCard() {
