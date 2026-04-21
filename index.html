@@ -2699,24 +2699,25 @@
         const reader = new FileReader();
         
         // Adaptive settings based on original file size
+        // Target: max 40KB per image for JSONBin.io Free Tier (~100KB total limit)
         const fileSizeKB = file.size / 1024;
-        let maxWidth = 1200;
-        let maxHeight = 1200;
-        let quality = 0.8;
+        let maxWidth = 800;
+        let maxHeight = 800;
+        let quality = 0.6;
         
-        // Adjust compression based on original size
+        // Adjust compression based on original size - be aggressive for small target
         if (fileSizeKB > 2000) { // > 2MB
-          maxWidth = 800;
-          maxHeight = 800;
-          quality = 0.6;
+          maxWidth = 600;
+          maxHeight = 600;
+          quality = 0.5;
         } else if (fileSizeKB > 1000) { // > 1MB
-          maxWidth = 1000;
-          maxHeight = 1000;
-          quality = 0.7;
+          maxWidth = 700;
+          maxHeight = 700;
+          quality = 0.55;
         } else if (fileSizeKB > 500) { // > 500KB
-          maxWidth = 1100;
-          maxHeight = 1100;
-          quality = 0.75;
+          maxWidth = 750;
+          maxHeight = 750;
+          quality = 0.6;
         }
         
         console.log(`Compression settings for ${file.name} (${Math.round(fileSizeKB)}KB): ${maxWidth}x${maxHeight}, q=${quality}`);
@@ -2757,11 +2758,11 @@
           let sizeInKB = Math.round(compressedData.length / 1024);
           console.log(`Image compressed: ${width}x${height}, ${sizeInKB}KB`);
           
-          // Progressive compression if still too large
-          const qualities = [0.6, 0.5, 0.4, 0.3];
+          // Progressive compression if still too large (target: 40KB for JSONBin.io)
+          const qualities = [0.5, 0.4, 0.3, 0.2];
           let attempt = 0;
           
-          while (compressedData.length > 80 * 1024 && attempt < qualities.length) {
+          while (compressedData.length > 40 * 1024 && attempt < qualities.length) {
             compressedData = canvas.toDataURL('image/jpeg', qualities[attempt]);
             sizeInKB = Math.round(compressedData.length / 1024);
             console.log(`Re-compressed (q=${qualities[attempt]}): ${sizeInKB}KB`);
@@ -2769,10 +2770,10 @@
           }
           
           // If still too large, reduce dimensions
-          if (compressedData.length > 80 * 1024) {
-            const scaleFactors = [0.7, 0.5, 0.4];
+          if (compressedData.length > 40 * 1024) {
+            const scaleFactors = [0.6, 0.5, 0.4, 0.3];
             for (const scale of scaleFactors) {
-              if (compressedData.length <= 80 * 1024) break;
+              if (compressedData.length <= 40 * 1024) break;
               
               const newWidth = Math.round(width * scale);
               const newHeight = Math.round(height * scale);
@@ -2790,8 +2791,8 @@
             }
           }
           
-          if (compressedData.length > 80 * 1024) {
-            reject(new Error(`Bild konnte nicht klein genug komprimiert werden (${sizeInKB}KB). Maximal 80KB erlaubt.`));
+          if (compressedData.length > 40 * 1024) {
+            reject(new Error(`Bild konnte nicht klein genug komprimiert werden (${sizeInKB}KB). Maximal 40KB erlaubt (JSONBin.io Free Tier Limit).`));
           } else {
             resolve(compressedData);
           }

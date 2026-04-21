@@ -464,20 +464,22 @@ class SparkDatabase {
   }
 
   async addSharedImage(imageData) {
-    // Check image size (JSONBin.io free tier has ~100KB limit per request)
-    const MAX_SIZE = 80 * 1024; // 80KB max to be safe
+    // Check image size (JSONBin.io free tier has ~100KB total limit per bin)
+    // Keep images small: max 40KB per image, max 5 images total
+    const MAX_SIZE = 40 * 1024; // 40KB max per image
+    const MAX_IMAGES = 5; // Maximum 5 images total
+    
     const imageSize = imageData.data ? imageData.data.length : 0;
     
     if (imageSize > MAX_SIZE) {
-      throw new Error(`Bild zu groß (${Math.round(imageSize/1024)}KB). Maximal 80KB erlaubt.`);
+      throw new Error(`Bild zu groß (${Math.round(imageSize/1024)}KB). Maximal 40KB erlaubt.`);
     }
     
     if (!this.data.sharedImages) {
       this.data.sharedImages = [];
     }
     
-    // Limit number of images stored
-    const MAX_IMAGES = 20;
+    // Limit number of images stored (remove oldest if over limit)
     if (this.data.sharedImages.length >= MAX_IMAGES) {
       this.data.sharedImages = this.data.sharedImages.slice(0, MAX_IMAGES - 1);
     }
