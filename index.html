@@ -1851,7 +1851,7 @@
       <header>
         <div>
           <h3>Spark'it - Geschützter Bereich</h3>
-          <p>Bitte gib das Passwort ein, um auf die Website zuzugreifen. Option "Angemeldet bleiben" für dauerhaften Zugriff. Für GitHub Pages: automatisch authentifiziert.</p>
+          <p>Bitte gib das Passwort ein, um auf die Website zuzugreifen. Deine Daten werden in einer geschützten externen Datenbank gespeichert.</p>
         </div>
       </header>
       <form class="form-grid" id="passwordForm">
@@ -1960,7 +1960,11 @@
     </div>
   </div>
 
+  <!-- External Database Configuration -->
+  <script src="database-config.js"></script>
+
   <script>
+    // Storage Keys (legacy support for migration)
     const STORAGE_KEYS = {
       customIdeas: "spark.customIdeas",
       deletedIdeas: "spark.deletedIdeas",
@@ -1969,7 +1973,10 @@
       adminUnlocked: "spark.adminUnlocked",
       easterEgg: "spark.easterEgg",
       authenticated: "spark.authenticated",
-      sharedImages: "spark.sharedImages"
+      sharedImages: "spark.sharedImages",
+      // New database cache keys
+      dbCache: "spark.dbCache",
+      lastSync: "spark.lastSync"
     };
 
     // Password protection
@@ -2165,37 +2172,41 @@
       logoButton: document.getElementById("logoButton")
     };
 
-    function readStorage(key, fallback) {
+    // Legacy storage functions (now using database)
+    async function getEditedIdeas() {
+      await ensureDBReady();
+      return sparkDB.getEditedIdeas();
+    }
+
+    async function getDeletedIdeas() {
+      await ensureDBReady();
+      return sparkDB.getDeletedIdeas();
+    }
+
+    async function getCustomIdeas() {
+      await ensureDBReady();
+      return sparkDB.getCustomIdeas();
+    }
+
+    async function getHistory() {
+      await ensureDBReady();
+      return sparkDB.getHistory();
+    }
+
+    async function saveHistory(history) {
       try {
-        const value = localStorage.getItem(key);
-        return value ? JSON.parse(value) : fallback;
-      } catch (error) {
-        return fallback;
+        await sparkDB.saveHistory(history);
+      } catch (e) {
+        console.warn('Could not save history:', e);
+        // Continue without saving - app still works
       }
     }
 
-    function writeStorage(key, value) {
-      localStorage.setItem(key, JSON.stringify(value));
-    }
-
-    function getEditedIdeas() {
-      return readStorage(STORAGE_KEYS.editedIdeas, {});
-    }
-
-    function getDeletedIdeas() {
-      return readStorage(STORAGE_KEYS.deletedIdeas, []);
-    }
-
-    function getCustomIdeas() {
-      return readStorage(STORAGE_KEYS.customIdeas, []);
-    }
-
-    function getHistory() {
-      return readStorage(STORAGE_KEYS.history, { date: [], short: [], fullday: [] });
-    }
-
-    function saveHistory(history) {
-      writeStorage(STORAGE_KEYS.history, history);
+    // Ensure database is initialized
+    async function ensureDBReady() {
+      if (!sparkDB.isInitialized) {
+        await sparkDB.init();
+      }
     }
 
     function slugify(text) {
@@ -2207,10 +2218,10 @@
         .replace(/(^-|-$)/g, "");
     }
 
-    function getAllIdeas() {
-      const edited = getEditedIdeas();
-      const deleted = new Set(getDeletedIdeas());
-      const custom = getCustomIdeas();
+    async function getAllIdeas() {
+      const edited = await getEditedIdeas();
+      const deleted = new Set(await getDeletedIdeas());
+      const custom = await getCustomIdeas();
       const mergedOriginal = originalIdeas
         .filter((idea) => !deleted.has(idea.id))
         .map((idea) => ({ ...idea, ...(edited[idea.id] || {}) }));
@@ -2222,8 +2233,9 @@
       return [...mergedOriginal, ...mergedCustom];
     }
 
-    function getIdeasByCategory(categoryId) {
-      return getAllIdeas().filter((idea) => idea.category === categoryId);
+    async function getIdeasByCategory(categoryId) {
+      const allIdeas = await getAllIdeas();
+      return allIdeas.filter((idea) => idea.category === categoryId);
     }
 
     function categoryLabel(categoryId) {
@@ -2235,9 +2247,9 @@
       return idea.isUserAdded ? "Eigene Idee" : "Original-Sammlung";
     }
 
-    function updateStats() {
-      const allIdeas = getAllIdeas();
-      const categoryIdeas = getIdeasByCategory(state.activeCategory);
+    async function updateStats() {
+      const allIdeas = await getAllIdeas();
+      const categoryIdeas = await getIdeasByCategory(state.activeCategory);
       elements.cardCount.textContent = allIdeas.length + " Ideen im Pool";
       elements.controlStamp.textContent = categoryLabel(state.activeCategory) + " · " + categoryIdeas.length + " Ideen verfügbar";
     }
@@ -2274,19 +2286,19 @@
       }, 720);
     }
 
-    function pickIdea(categoryId) {
-      const ideas = getIdeasByCategory(categoryId);
+    async function pickIdea(categoryId) {
+      const ideas = await getIdeasByCategory(categoryId);
       if (!ideas.length) {
         return null;
       }
 
-      const history = getHistory();
+      const history = await getHistory();
       const seenIds = new Set(history[categoryId] || []);
       let available = ideas.filter((idea) => !seenIds.has(idea.id));
 
       if (!available.length) {
         history[categoryId] = [];
-        saveHistory(history);
+        await saveHistory(history);
         available = [...ideas];
       }
 
@@ -2294,21 +2306,21 @@
       const candidates = pool.length ? pool : available;
       const nextIdea = candidates[Math.floor(Math.random() * candidates.length)];
       history[categoryId] = [...(history[categoryId] || []), nextIdea.id];
-      saveHistory(history);
+      await saveHistory(history);
 
       return nextIdea;
     }
 
-    function generateIdea() {
-      const nextIdea = pickIdea(state.activeCategory);
+    async function generateIdea() {
+      const nextIdea = await pickIdea(state.activeCategory);
       if (!nextIdea) {
         return;
       }
       animateCard(nextIdea);
-      updateStats();
+      await updateStats();
     }
 
-    function resetCard() {
+    async function resetCard() {
       const category = categories.find((entry) => entry.id === state.activeCategory);
       elements.ideaCard.style.setProperty("--random-rotation", "0deg");
       elements.cardEmoji.textContent = category.icon;
@@ -2317,7 +2329,7 @@
       elements.cardDescription.textContent = "Drück auf \"Spark'it\" und hol dir eine Aktivität aus dieser Kategorie. Wiederholungen werden erst zugelassen, wenn du den Pool leer gezogen hast.";
       elements.cardSource.textContent = "Bereit für Zufall";
       state.currentIdeaId = null;
-      updateStats();
+      await updateStats();
     }
 
     function renderCategoryButtons() {
@@ -2345,12 +2357,9 @@
         .join("");
     }
 
-    function addCustomIdea(payload) {
-      const customIdeas = getCustomIdeas();
-      const idBase = "custom-" + slugify(payload.title || "idee");
-      const id = idBase + "-" + Date.now();
-      customIdeas.unshift({
-        id,
+    async function addCustomIdea(payload) {
+      const newIdea = {
+        id: "custom-" + slugify(payload.title || "idee") + "-" + Date.now(),
         title: payload.title,
         description: payload.description,
         category: payload.category,
@@ -2358,25 +2367,19 @@
         tags: ["Eigene Idee", categoryLabel(payload.category), "Persönlich"],
         emoji: payload.emoji,
         isUserAdded: true
-      });
-      writeStorage(STORAGE_KEYS.customIdeas, customIdeas);
+      };
+      await sparkDB.addCustomIdea(newIdea);
     }
 
-    function saveAdminEdit(ideaId, patch) {
-      const edited = getEditedIdeas();
-      edited[ideaId] = { ...(edited[ideaId] || {}), ...patch };
-      writeStorage(STORAGE_KEYS.editedIdeas, edited);
+    async function saveAdminEdit(ideaId, patch) {
+      await sparkDB.saveEdit(ideaId, patch);
     }
 
-    function deleteIdea(ideaId) {
-      const deleted = getDeletedIdeas();
-      if (!deleted.includes(ideaId)) {
-        deleted.push(ideaId);
-        writeStorage(STORAGE_KEYS.deletedIdeas, deleted);
-      }
+    async function deleteIdea(ideaId) {
+      await sparkDB.deleteIdea(ideaId);
     }
 
-    function renderAdmin() {
+    async function renderAdmin() {
       if (!state.unlockedAdmin) {
         elements.adminGate.classList.remove("hidden");
         elements.adminContent.classList.add("hidden");
@@ -2388,7 +2391,8 @@
 
       const filter = elements.adminFilter.value || "all";
       const term = (elements.adminSearch.value || "").trim().toLowerCase();
-      const ideas = getAllIdeas().filter((idea) => {
+      const allIdeas = await getAllIdeas();
+      const ideas = allIdeas.filter((idea) => {
         const matchesFilter = filter === "all" ? true : idea.category === filter;
         const haystack = (idea.title + " " + idea.description).toLowerCase();
         const matchesTerm = !term || haystack.includes(term);
@@ -2412,8 +2416,9 @@
         .join("");
     }
 
-    function exportIdeas() {
-      const blob = new Blob([JSON.stringify(getAllIdeas(), null, 2)], { type: "application/json" });
+    async function exportIdeas() {
+      const allIdeas = await getAllIdeas();
+      const blob = new Blob([JSON.stringify(allIdeas, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -2422,11 +2427,11 @@
       URL.revokeObjectURL(url);
     }
 
-    function unlockAdmin() {
+    async function unlockAdmin() {
       if (elements.adminPassword.value === "enno") {
         state.unlockedAdmin = true;
         elements.adminFeedback.textContent = "Archiv geöffnet.";
-        renderAdmin();
+        await renderAdmin();
         return;
       }
 
@@ -2441,31 +2446,32 @@
     }
 
     function bindEvents() {
-      elements.categoryButtons.addEventListener("click", (event) => {
+      elements.categoryButtons.addEventListener("click", async (event) => {
         const button = event.target.closest("[data-category]");
         if (!button) {
           return;
         }
         state.activeCategory = button.dataset.category;
         renderCategoryButtons();
-        resetCard();
+        await resetCard();
       });
 
       elements.generateButton.addEventListener("click", generateIdea);
       elements.addIdeaButton.addEventListener("click", () => openModal(elements.ideaModal));
-      elements.adminToggle.addEventListener("click", () => {
+      elements.adminToggle.addEventListener("click", async () => {
         state.unlockedAdmin = false;
         elements.adminPassword.value = "";
         elements.adminFeedback.textContent = "Passwort erforderlich.";
         openModal(elements.adminModal);
-        renderAdmin();
+        await renderAdmin();
       });
 
-      elements.logoButton.addEventListener("click", () => {
+      elements.logoButton.addEventListener("click", async () => {
         state.easterEggEnabled = !state.easterEggEnabled;
         localStorage.setItem(STORAGE_KEYS.easterEgg, String(state.easterEggEnabled));
         document.body.style.filter = state.easterEggEnabled ? "saturate(1.08) hue-rotate(-8deg)" : "";
-        elements.controlStamp.textContent = state.easterEggEnabled ? "Easter Egg aktiv · Das Logo hat die Sonne gedreht" : categoryLabel(state.activeCategory) + " · " + getIdeasByCategory(state.activeCategory).length + " Ideen verfügbar";
+        const categoryIdeas = await getIdeasByCategory(state.activeCategory);
+        elements.controlStamp.textContent = state.easterEggEnabled ? "Easter Egg aktiv · Das Logo hat die Sonne gedreht" : categoryLabel(state.activeCategory) + " · " + categoryIdeas.length + " Ideen verfügbar";
       });
 
       elements.logoButton.addEventListener("keydown", (event) => {
@@ -2489,18 +2495,18 @@
         });
       });
 
-      elements.ideaForm.addEventListener("submit", (event) => {
+      elements.ideaForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         const formData = new FormData(elements.ideaForm);
-        addCustomIdea({
+        await addCustomIdea({
           title: formData.get("title").trim(),
           description: formData.get("description").trim(),
           category: formData.get("category"),
           emoji: formData.get("emoji").trim()
         });
         elements.ideaForm.reset();
-        updateStats();
-        renderAdmin();
+        await updateStats();
+        await renderAdmin();
         closeModal(elements.ideaModal);
       });
 
@@ -2511,25 +2517,25 @@
         }
       });
 
-      elements.adminSearch.addEventListener("input", renderAdmin);
-      elements.adminFilter.addEventListener("change", renderAdmin);
+      elements.adminSearch.addEventListener("input", () => renderAdmin());
+      elements.adminFilter.addEventListener("change", () => renderAdmin());
       elements.exportButton.addEventListener("click", exportIdeas);
 
-      elements.adminAddForm.addEventListener("submit", (event) => {
+      elements.adminAddForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         const formData = new FormData(elements.adminAddForm);
-        addCustomIdea({
+        await addCustomIdea({
           title: formData.get("title").trim(),
           description: formData.get("description").trim(),
           category: formData.get("category"),
           emoji: formData.get("emoji").trim()
         });
         elements.adminAddForm.reset();
-        renderAdmin();
-        updateStats();
+        await renderAdmin();
+        await updateStats();
       });
 
-      elements.adminTableBody.addEventListener("click", (event) => {
+      elements.adminTableBody.addEventListener("click", async (event) => {
         const saveButton = event.target.closest("[data-save]");
         const deleteButton = event.target.closest("[data-delete]");
 
@@ -2547,11 +2553,12 @@
               "Bearbeitet"
             ];
           }
-          saveAdminEdit(ideaId, patch);
-          renderAdmin();
-          updateStats();
+          await saveAdminEdit(ideaId, patch);
+          await renderAdmin();
+          await updateStats();
           if (state.currentIdeaId === ideaId) {
-            const current = getAllIdeas().find((idea) => idea.id === ideaId);
+            const allIdeas = await getAllIdeas();
+            const current = allIdeas.find((idea) => idea.id === ideaId);
             if (current) {
               setCardIdea(current);
             }
@@ -2559,86 +2566,81 @@
         }
 
         if (deleteButton) {
-          deleteIdea(deleteButton.dataset.delete);
-          renderAdmin();
-          updateStats();
+          await deleteIdea(deleteButton.dataset.delete);
+          await renderAdmin();
+          await updateStats();
           if (state.currentIdeaId === deleteButton.dataset.delete) {
-            resetCard();
+            await resetCard();
           }
         }
       });
     }
 
-    function init() {
+    async function init() {
+      // Initialize database first (with timeout protection)
+      try {
+        await Promise.race([
+          ensureDBReady(),
+          new Promise(resolve => setTimeout(resolve, 3000)) // Max 3 seconds wait
+        ]);
+      } catch (e) {
+        console.warn('DB init slow, continuing with local data');
+      }
+      
+      // Migrate old localStorage data if present (non-blocking)
+      sparkDB.migrateFromLocalStorage().catch(console.warn);
+      
       seedSelects();
       renderCategoryButtons();
       bindEvents();
-      resetCard();
-      renderAdmin();
-      updateStats();
+      await resetCard();
+      await renderAdmin();
+      await updateStats();
       if (state.easterEggEnabled) {
         document.body.style.filter = "saturate(1.08) hue-rotate(-8deg)";
       }
+      
+      // Initialize gallery (non-blocking)
+      renderGallery().catch(console.warn);
     }
 
-    // Image Upload and Gallery Functions
-    function getSharedImages() {
+    // Image Upload and Gallery Functions (now using database)
+    async function getSharedImages() {
       try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEYS.sharedImages) || '[]');
-      } catch {
+        await ensureDBReady();
+        return sparkDB.getSharedImages();
+      } catch (e) {
+        console.warn('Could not load shared images:', e);
         return [];
       }
     }
 
-    function saveSharedImages(images) {
-      localStorage.setItem(STORAGE_KEYS.sharedImages, JSON.stringify(images));
-    }
-
-    function addImageToGallery(imageData, filename) {
-      const images = getSharedImages();
-      const newImage = {
-        id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
-        data: imageData,
-        filename: filename,
-        uploadedAt: new Date().toISOString(),
-        uploadedBy: 'User' // Could be enhanced with user identification
-      };
-      images.unshift(newImage);
-      saveSharedImages(images);
-      renderGallery();
-    }
-
-    function deleteImageFromGallery(imageId) {
-      const images = getSharedImages().filter(img => img.id !== imageId);
-      saveSharedImages(images);
-      renderGallery();
-    }
-
-    function migrateOldImages() {
-      // Check if there are old images to migrate
-      const oldImagesKey = 'spark-uploaded-images';
-      const oldImages = localStorage.getItem(oldImagesKey);
-      
-      if (oldImages && getSharedImages().length === 0) {
-        try {
-          const parsedOldImages = JSON.parse(oldImages);
-          // Add uploadedBy field to old images
-          const migratedImages = parsedOldImages.map(img => ({
-            ...img,
-            uploadedBy: 'Legacy User'
-          }));
-          saveSharedImages(migratedImages);
-          // Clear old storage
-          localStorage.removeItem(oldImagesKey);
-        } catch (e) {
-          console.warn('Failed to migrate old images:', e);
-        }
+    async function addImageToGallery(imageData, filename) {
+      try {
+        await sparkDB.addSharedImage({
+          data: imageData,
+          filename: filename,
+          uploadedBy: 'User'
+        });
+        await renderGallery();
+      } catch (e) {
+        console.error('Failed to add image:', e);
+        alert('Bild konnte nicht gespeichert werden. Bitte prüfe die Datenbank-Konfiguration.');
       }
     }
 
-    function renderGallery() {
+    async function deleteImageFromGallery(imageId) {
+      try {
+        await sparkDB.deleteSharedImage(imageId);
+        await renderGallery();
+      } catch (e) {
+        console.error('Failed to delete image:', e);
+      }
+    }
+
+    async function renderGallery() {
       const galleryGrid = document.getElementById('galleryGrid');
-      const images = getSharedImages();
+      const images = await getSharedImages();
       
       if (images.length === 0) {
         galleryGrid.innerHTML = '<div class="empty-gallery">Noch keine Bilder hochgeladen. Lade deine Erinnerungen hoch!</div>';
@@ -2657,24 +2659,31 @@
       }).join('');
     }
 
-    function handleImageUpload(files) {
-      Array.from(files).forEach(file => {
+    async function handleImageUpload(files) {
+      const fileArray = Array.from(files);
+      for (const file of fileArray) {
         if (!file.type.startsWith('image/')) {
           console.warn('Nur Bilddateien sind erlaubt:', file.name);
-          return;
+          continue;
         }
 
         if (file.size > 10 * 1024 * 1024) { // 10MB limit
           console.warn('Datei zu groß (max 10MB):', file.name);
-          return;
+          continue;
         }
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          addImageToGallery(e.target.result, file.name);
-        };
-        reader.readAsDataURL(file);
-      });
+        try {
+          const imageData = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+          await addImageToGallery(imageData, file.name);
+        } catch (e) {
+          console.error('Failed to upload image:', e);
+        }
+      }
     }
 
     // Initialize image upload functionality
@@ -2689,9 +2698,9 @@
       });
 
       // File selection
-      uploadInput.addEventListener('change', (e) => {
+      uploadInput.addEventListener('change', async (e) => {
         if (e.target.files.length > 0) {
-          handleImageUpload(e.target.files);
+          await handleImageUpload(e.target.files);
           uploadInput.value = ''; // Reset input
         }
       });
@@ -2707,32 +2716,48 @@
         uploadArea.classList.remove('dragover');
       });
 
-      uploadArea.addEventListener('drop', (e) => {
+      uploadArea.addEventListener('drop', async (e) => {
         e.preventDefault();
         uploadArea.classList.remove('dragover');
         
         const files = e.dataTransfer.files;
         if (files.length > 0) {
-          handleImageUpload(files);
+          await handleImageUpload(files);
         }
       });
 
       // Gallery delete functionality
-      document.addEventListener('click', (e) => {
+      document.addEventListener('click', async (e) => {
         if (e.target.classList.contains('delete-btn')) {
           const imageId = e.target.dataset.imageId;
           if (confirm('Möchtest du dieses Bild wirklich löschen?')) {
-            deleteImageFromGallery(imageId);
+            await deleteImageFromGallery(imageId);
           }
         }
       });
-
-      // Render initial gallery
-      renderGallery();
     }
 
-    // Update init function
-    function init() {
+    // Handle logout
+    function handleLogout() {
+      // Clear authentication and show password overlay
+      localStorage.removeItem(STORAGE_KEYS.authenticated);
+      sessionStorage.removeItem(STORAGE_KEYS.authenticated);
+      showPasswordOverlay();
+    }
+
+    // Start the application
+    (async function() {
+      // Clear old localStorage cache to fix quota issues
+      try {
+        localStorage.removeItem('spark.dbCache');
+        localStorage.removeItem('spark.lastSync');
+        // Clear old image storage
+        localStorage.removeItem('spark-uploaded-images');
+        localStorage.removeItem('spark.sharedImages');
+      } catch (e) {
+        console.log('Could not clear cache:', e);
+      }
+      
       // Check authentication first
       checkAuthentication();
       
@@ -2745,7 +2770,6 @@
       // Add mobile touch optimizations for Spark'it button
       const generateButton = document.getElementById('generateButton');
       if (generateButton) {
-        // Prevent double-tap zoom on mobile
         generateButton.addEventListener('touchstart', function(e) {
           e.target.style.transform = 'scale(0.98)';
         });
@@ -2756,36 +2780,26 @@
           }, 100);
         });
         
-        // Ensure proper touch feedback
         generateButton.addEventListener('touchcancel', function(e) {
           e.target.style.transform = 'scale(1)';
         });
       }
       
-      function handleLogout() {
-        // Clear authentication and show password overlay
-        localStorage.removeItem(STORAGE_KEYS.authenticated);
-        sessionStorage.removeItem(STORAGE_KEYS.authenticated);
-        localStorage.setItem(STORAGE_KEYS.rememberMe, "false");
-        showPasswordOverlay();
-      }
-      
-      // Migrate old images to shared storage
-      migrateOldImages();
-      
-      seedSelects();
-      renderCategoryButtons();
-      bindEvents();
-      resetCard();
-      renderAdmin();
-      updateStats();
+      // Initialize image upload handlers immediately (non-blocking)
       initImageUpload();
-      if (state.easterEggEnabled) {
-        document.body.style.filter = "saturate(1.08) hue-rotate(-8deg)";
+      
+      // Initialize the application with error handling
+      try {
+        await init();
+      } catch (error) {
+        console.error('App initialization error:', error);
+        // Show basic UI even if database init fails
+        seedSelects();
+        renderCategoryButtons();
+        bindEvents();
+        resetCard();
       }
-    }
-
-    init();
+    })();
   </script>
 </body>
 </html>
