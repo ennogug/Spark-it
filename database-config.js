@@ -22,7 +22,7 @@ const DB_CONFIG = {
   API_KEY: '$2a$10$p3YiC9HQugez5nmQzgmZl.bo8mabAcfNVgAKkQ3C2wKX6B6dWqX0S', // Replace with your X-Master-Key
   
   // Bin ID from your JSONBin URL: https://api.jsonbin.io/v3/b/YOUR_BIN_ID
-  BIN_ID: '69e7461936566621a8d6c842', // Replace with your actual Bin ID
+  BIN_ID: '69e7752736566621a8d7ab1d', // Replace with your actual Bin ID
   
   // API Endpoints
   BASE_URL: 'https://api.jsonbin.io/v3/b',
