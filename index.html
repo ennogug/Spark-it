@@ -2660,10 +2660,34 @@
     }
 
     // Compress image to reduce size for database storage
-    async function compressImage(file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) {
+    // Adaptive compression based on original file size
+    async function compressImage(file) {
       return new Promise((resolve, reject) => {
         const img = new Image();
         const reader = new FileReader();
+        
+        // Adaptive settings based on original file size
+        const fileSizeKB = file.size / 1024;
+        let maxWidth = 1200;
+        let maxHeight = 1200;
+        let quality = 0.8;
+        
+        // Adjust compression based on original size
+        if (fileSizeKB > 2000) { // > 2MB
+          maxWidth = 800;
+          maxHeight = 800;
+          quality = 0.6;
+        } else if (fileSizeKB > 1000) { // > 1MB
+          maxWidth = 1000;
+          maxHeight = 1000;
+          quality = 0.7;
+        } else if (fileSizeKB > 500) { // > 500KB
+          maxWidth = 1100;
+          maxHeight = 1100;
+          quality = 0.75;
+        }
+        
+        console.log(`Compression settings for ${file.name} (${Math.round(fileSizeKB)}KB): ${maxWidth}x${maxHeight}, q=${quality}`);
         
         reader.onload = (e) => {
           img.src = e.target.result;
@@ -2697,18 +2721,45 @@
           ctx.drawImage(img, 0, 0, width, height);
           
           // Get compressed data URL
-          const compressedData = canvas.toDataURL('image/jpeg', quality);
+          let compressedData = canvas.toDataURL('image/jpeg', quality);
+          let sizeInKB = Math.round(compressedData.length / 1024);
+          console.log(`Image compressed: ${width}x${height}, ${sizeInKB}KB`);
           
-          // Check size
-          const sizeInKB = Math.round(compressedData.length / 1024);
-          console.log(`Image compressed: ${file.name} -> ${width}x${height}, ${sizeInKB}KB`);
+          // Progressive compression if still too large
+          const qualities = [0.6, 0.5, 0.4, 0.3];
+          let attempt = 0;
+          
+          while (compressedData.length > 80 * 1024 && attempt < qualities.length) {
+            compressedData = canvas.toDataURL('image/jpeg', qualities[attempt]);
+            sizeInKB = Math.round(compressedData.length / 1024);
+            console.log(`Re-compressed (q=${qualities[attempt]}): ${sizeInKB}KB`);
+            attempt++;
+          }
+          
+          // If still too large, reduce dimensions
+          if (compressedData.length > 80 * 1024) {
+            const scaleFactors = [0.7, 0.5, 0.4];
+            for (const scale of scaleFactors) {
+              if (compressedData.length <= 80 * 1024) break;
+              
+              const newWidth = Math.round(width * scale);
+              const newHeight = Math.round(height * scale);
+              const smallCanvas = document.createElement('canvas');
+              smallCanvas.width = newWidth;
+              smallCanvas.height = newHeight;
+              const smallCtx = smallCanvas.getContext('2d');
+              smallCtx.fillStyle = '#FFFFFF';
+              smallCtx.fillRect(0, 0, newWidth, newHeight);
+              smallCtx.drawImage(canvas, 0, 0, newWidth, newHeight);
+              
+              compressedData = smallCanvas.toDataURL('image/jpeg', 0.5);
+              sizeInKB = Math.round(compressedData.length / 1024);
+              console.log(`Resized to ${newWidth}x${newHeight}: ${sizeInKB}KB`);
+            }
+          }
           
           if (compressedData.length > 80 * 1024) {
-            // Still too big, compress more
-            const moreCompressed = canvas.toDataURL('image/jpeg', 0.6);
-            const newSize = Math.round(moreCompressed.length / 1024);
-            console.log(`Re-compressed: ${newSize}KB`);
-            resolve(moreCompressed);
+            reject(new Error(`Bild konnte nicht klein genug komprimiert werden (${sizeInKB}KB). Maximal 80KB erlaubt.`));
           } else {
             resolve(compressedData);
           }
